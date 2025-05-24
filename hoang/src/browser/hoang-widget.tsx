@@ -265,18 +265,34 @@ export class HoangWidget extends TreeWidget {
         );
     }
 
-    protected renderInfoButton(node: TreeNode, props: NodeProps): React.ReactNode {
-        const icon = codicon('info');
-        const classNames = [TREE_NODE_SEGMENT_CLASS, icon];
+    protected renderUpdateButton(node: TreeNode, props: NodeProps): React.ReactNode {
+        const icon = codicon('settings-gear');
+        const classNames = [TREE_NODE_SEGMENT_CLASS, 'xplor-trigger-button', icon];
 
         return (
             <button
                 type="button"
                 className={classNames.join(' ')}
-                title={`Delete ${(node as TriggerNode).name}`}
+                title={`Update ${(node as TriggerNode).name}`}
+                tabIndex={0}
+                onClick={async e => await this.onUpdateButtonClick(e, node as TriggerNode)}
+                aria-label={`Update ${(node as TriggerNode).name}`}
+            />
+        );
+    }
+
+    protected renderInfoButton(node: TreeNode, props: NodeProps): React.ReactNode {
+        const icon = codicon('info');
+        const classNames = [TREE_NODE_SEGMENT_CLASS, 'xplor-trigger-button', icon];
+
+        return (
+            <button
+                type="button"
+                className={classNames.join(' ')}
+                title={`Info ${(node as TriggerNode).name}`}
                 tabIndex={0}
                 onClick={async e => await this.onInfoButtonClick(e, node as TriggerNode)}
-                aria-label={`Delete ${(node as TriggerNode).name}`}
+                aria-label={`Info ${(node as TriggerNode).name}`}
             />
         );
     }
@@ -306,6 +322,14 @@ export class HoangWidget extends TreeWidget {
         node.triggerData.isEnable = isChecked;
 
         this.messageService.info(`Trigger ${node.name} is now ${isChecked ? 'enabled' : 'disabled'}`);
+    }
+
+    private async onUpdateButtonClick(e: React.MouseEvent<HTMLSpanElement, MouseEvent>, node: TriggerNode): Promise<void> {
+        e.stopPropagation();
+        e.preventDefault();
+
+        // Implement the logic to clear the trigger here
+        this.messageService.info(`Update ${node.name}`);
     }
 
     private async onInfoButtonClick(e: React.MouseEvent<HTMLSpanElement, MouseEvent>, node: TriggerNode): Promise<void> {

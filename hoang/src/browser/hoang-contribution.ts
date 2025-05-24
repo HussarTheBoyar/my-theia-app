@@ -1,13 +1,25 @@
-import { injectable } from '@theia/core/shared/inversify';
+import { inject, injectable } from '@theia/core/shared/inversify';
 import { MenuModelRegistry } from '@theia/core';
 import { HoangWidget } from './hoang-widget';
-import { AbstractViewContribution } from '@theia/core/lib/browser';
+import { AbstractViewContribution, codicon } from '@theia/core/lib/browser';
 import { Command, CommandRegistry } from '@theia/core/lib/common/command';
+import { DemoDialog } from './dialog';
+import { TabBarToolbarContribution, TabBarToolbarRegistry } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
 
 export const HoangCommand: Command = { id: 'hoang:command' };
 
+export namespace TriggerCommand {
+    export const IMPORT: Command = {
+        id: 'trigger:import',
+        label: 'Import Trigger'
+    }
+}
+
 @injectable()
-export class HoangContribution extends AbstractViewContribution<HoangWidget> {
+export class HoangContribution extends AbstractViewContribution<HoangWidget> implements TabBarToolbarContribution {
+
+    @inject(DemoDialog)
+    protected readonly demoDialog: DemoDialog;
 
     /**
      * `AbstractViewContribution` handles the creation and registering
@@ -48,6 +60,13 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> {
         commands.registerCommand(HoangCommand, {
             execute: () => super.openView({ activate: false, reveal: true })
         });
+
+        commands.registerCommand(TriggerCommand.IMPORT, {
+            execute: async () => {
+                // Implement the import logic here
+                await this.demoDialog.open();
+            }
+        });
     }
 
     /**
@@ -67,4 +86,38 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> {
     registerMenus(menus: MenuModelRegistry): void {
         super.registerMenus(menus);
     }
+
+    registerToolbarItems(toolbar: TabBarToolbarRegistry): void {
+        toolbar.registerItem({
+            id: TriggerCommand.IMPORT.id,
+            command: TriggerCommand.IMPORT.id,
+            icon: codicon('settings'),
+            priority: 2,
+            tooltip: TriggerCommand.IMPORT.label,
+        });
+    }
 }
+
+// export const TRIGGER_PROPS = <TreeProps>{
+//     ...defaultTreeProps,
+//     globalSelection: true,
+// };
+
+// export function createRISCVDebugTriggerTreeContainer(parent: interfaces.Container): Container {
+//     const child = createTreeContainer(parent, {
+//         widget: RISCVTriggerWidget,
+//         props: TRIGGER_PROPS,
+//     });
+
+//     // Ensure no duplicate bindings
+//     if (child.isBound(RISCVTriggerWidget)) {
+//         child.unbind(RISCVTriggerWidget);
+//     }
+//     child.bind(RISCVTriggerWidget).toSelf();
+
+//     return child;
+// }
+
+// export function createRISCVTriggerWidget(parent: interfaces.Container): RISCVTriggerWidget {
+//     return createRISCVDebugTriggerTreeContainer(parent).get(RISCVTriggerWidget);
+// }

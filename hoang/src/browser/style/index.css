@@ -6,6 +6,19 @@
     text-transform: uppercase;
 }
 
+
+.xplor-trigger-button {
+    visibility: hidden;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.theia-TreeNode:hover .xplor-trigger-button {
+    visibility: visible;
+}
 .grid-content {
     display: flex;
     flex-direction: column;
@@ -52,3 +65,4 @@
 .menu-item {
     z-index: 10;
 }
+>>>>>>> master

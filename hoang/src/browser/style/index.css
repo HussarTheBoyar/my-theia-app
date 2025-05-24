@@ -6,6 +6,7 @@
     text-transform: uppercase;
 }
 
+<<<<<<< HEAD
 .xplor-trigger-button {
     visibility: hidden;
     background: none;
@@ -18,3 +19,51 @@
 .theia-TreeNode:hover .xplor-trigger-button {
     visibility: visible;
 }
+=======
+.grid-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.lm-Widget.dialogOverlay .dialogTitle {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 35px 30px 10px 35px;
+    background-color: #593B56;
+}
+
+.lm-Widget.dialogOverlay .dialogContent {
+    z-index: 1;
+    background-color: #593B56;
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
+.lm-Widget.dialogOverlay .dialogControl {
+    background-color: #593B56;
+    padding: 10px 35px 35px 35px;
+}
+
+.title-form {
+    color: rgba(243,243,254,0.7) !important;
+}
+
+.input-text {
+    margin-bottom: 20px;
+    margin-top: 5px;
+    background-color: #41414c;
+    color: #f3f3fe !important;
+}
+
+.theia-button {
+    padding: 15px 20px 15px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+.menu-item {
+    z-index: 10;
+}
+>>>>>>> master

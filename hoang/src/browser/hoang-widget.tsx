@@ -235,6 +235,7 @@ export class HoangWidget extends TreeWidget {
             {this.renderCaption(node, props)}
             {this.renderCaptionAffixes(node, props, 'captionSuffixes')}
             {this.renderTailDecorations(node, props)}
+            {this.renderUpdateButton(node, props)}
             {this.renderInfoButton(node, props)}
             {this.renderDeleteButton(node, props)}
         </div>;

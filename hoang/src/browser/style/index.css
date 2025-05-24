@@ -6,7 +6,7 @@
     text-transform: uppercase;
 }
 
-<<<<<<< HEAD
+
 .xplor-trigger-button {
     visibility: hidden;
     background: none;
@@ -19,7 +19,6 @@
 .theia-TreeNode:hover .xplor-trigger-button {
     visibility: visible;
 }
-=======
 .grid-content {
     display: flex;
     flex-direction: column;

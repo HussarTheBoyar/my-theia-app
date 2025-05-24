@@ -10,15 +10,13 @@
   ],
   "dependencies": {
     "@theia/core": "1.61.0",
-<<<<<<< HEAD
     "@theia/navigator": "1.61.0",
-    "@theia/debug": "1.61.0"
-=======
+    "@theia/debug": "1.61.0",
     "@mui/material": "^5.0.0",
     "@mui/icons-material": "^5.0.0",
     "@emotion/react": "^11.0.0",
     "@emotion/styled": "^11.0.0"
->>>>>>> master
+
   },
   "devDependencies": {
     "rimraf": "^5.0.0",

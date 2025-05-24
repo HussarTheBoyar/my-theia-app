@@ -55,12 +55,12 @@
         "type": "node",
         "request": "launch",
         "name": "Launch Browser Backend",
-        "program": "${workspaceFolder}/applications/browser/src-gen/backend/main.js",
+        "program": "${workspaceFolder}/browser-app/src-gen/backend/main.js",
         "args": [
           "--hostname=0.0.0.0",
           "--port=3000",
           "--no-cluster",
-          "--app-project-path=${workspaceFolder}/applications/browser",
+          "--app-project-path=${workspaceFolder}/browser-app",
           "--plugins=local-dir:plugins",
           "--hosted-plugin-inspect=9339"
         ],
@@ -69,8 +69,8 @@
         },
         "sourceMaps": true,
         "outFiles": [
-          "${workspaceFolder}/applications/browser/src-gen/backend/*.js",
-          "${workspaceFolder}/applications/browser/lib/**/*.js",
+          "${workspaceFolder}/browser-app/src-gen/backend/*.js",
+          "${workspaceFolder}/browser-app/lib/**/*.js",
           "${workspaceFolder}/packages/*/lib/**/*.js",
           "${workspaceFolder}/dev-packages/*/lib/**/*.js"
         ],
@@ -94,7 +94,7 @@
         "type": "node",
         "request": "launch",
         "name": "Launch Browser Backend (eclipse.jdt.ls)",
-        "program": "${workspaceFolder}/applications/browser/src-gen/backend/main.js",
+        "program": "${workspaceFolder}/browser-app/src-gen/backend/main.js",
         "args": [
           "--log-level=debug",
           "--root-dir=${workspaceFolder}/../eclipse.jdt.ls/org.eclipse.jdt.ls.core",
@@ -107,8 +107,8 @@
         },
         "sourceMaps": true,
         "outFiles": [
-          "${workspaceFolder}/applications/browser/src-gen/backend/*.js",
-          "${workspaceFolder}/applications/browser/lib/**/*.js",
+          "${workspaceFolder}/browser-app/src-gen/backend/*.js",
+          "${workspaceFolder}/browser-app/lib/**/*.js",
           "${workspaceFolder}/packages/*/lib/**/*.js",
           "${workspaceFolder}/dev-packages/*/lib/**/*.js"
         ],
@@ -136,7 +136,7 @@
         "type": "chrome",
         "request": "launch",
         "url": "http://localhost:3000/",
-        "webRoot": "${workspaceFolder}/applications/browser"
+        "webRoot": "${workspaceFolder}/browser-app"
       },
       {
         "type": "chrome",
@@ -150,7 +150,7 @@
         "type": "node",
         "request": "launch",
         "args": [
-          "${workspaceFolder}/applications/browser/src-gen/backend/main.js",
+          "${workspaceFolder}/browser-app/src-gen/backend/main.js",
           "${workspaceFolder}/plugins/vscode-api-tests/testWorkspace",
           "--port",
           "3030",

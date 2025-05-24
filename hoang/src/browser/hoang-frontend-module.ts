@@ -16,6 +16,6 @@ export default new ContainerModule(bind => {
     })).inSingletonScope();
 
     bind(DemoDialog).toSelf().inSingletonScope();
-    bind(DialogProps).toConstantValue({ title: 'Theia' });
+    bind(DialogProps).toConstantValue({ title: 'Add New Trigger' });
     bind(DemoDialogProps).toConstantValue({ title: 'Create Project' });
 });

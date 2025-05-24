@@ -5,3 +5,16 @@
     padding: 10px;
     text-transform: uppercase;
 }
+
+.xplor-trigger-button {
+    visibility: hidden;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.theia-TreeNode:hover .xplor-trigger-button {
+    visibility: visible;
+}

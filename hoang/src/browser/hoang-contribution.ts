@@ -1,7 +1,7 @@
-import { inject, injectable } from '@theia/core/shared/inversify';
+import { Container, inject, injectable, interfaces } from '@theia/core/shared/inversify';
 import { MenuModelRegistry } from '@theia/core';
 import { HoangWidget } from './hoang-widget';
-import { AbstractViewContribution, codicon } from '@theia/core/lib/browser';
+import { AbstractViewContribution, codicon, createTreeContainer, defaultTreeProps, TreeProps } from '@theia/core/lib/browser';
 import { Command, CommandRegistry } from '@theia/core/lib/common/command';
 import { DemoDialog } from './dialog';
 import { TabBarToolbarContribution, TabBarToolbarRegistry } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
@@ -98,26 +98,28 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
     }
 }
 
-// export const TRIGGER_PROPS = <TreeProps>{
-//     ...defaultTreeProps,
-//     globalSelection: true,
-// };
+export const TRIGGER_PROPS = <TreeProps>{
+    ...defaultTreeProps,
+    globalSelection: true,
+};
 
-// export function createRISCVDebugTriggerTreeContainer(parent: interfaces.Container): Container {
-//     const child = createTreeContainer(parent, {
-//         widget: RISCVTriggerWidget,
-//         props: TRIGGER_PROPS,
-//     });
+export function createRISCVDebugTriggerTreeContainer(parent: interfaces.Container): Container {
+    const child = createTreeContainer(parent, {
+        widget: HoangWidget,
+        props: TRIGGER_PROPS,
+    });
 
-//     // Ensure no duplicate bindings
-//     if (child.isBound(RISCVTriggerWidget)) {
-//         child.unbind(RISCVTriggerWidget);
-//     }
-//     child.bind(RISCVTriggerWidget).toSelf();
+    // Ensure no duplicate bindings
+    if (child.isBound(HoangWidget)) {
+        child.unbind(HoangWidget);
+    }
+    child.bind(HoangWidget).toSelf();
 
-//     return child;
-// }
+    return child;
+}
 
-// export function createRISCVTriggerWidget(parent: interfaces.Container): RISCVTriggerWidget {
-//     return createRISCVDebugTriggerTreeContainer(parent).get(RISCVTriggerWidget);
-// }
+export function createRISCVTriggerWidget(parent: interfaces.Container): HoangWidget {
+    return createRISCVDebugTriggerTreeContainer(parent).get(HoangWidget);
+}
+
+

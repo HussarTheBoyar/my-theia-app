@@ -1,6 +1,7 @@
 import { TreeNode } from "@theia/core/lib/browser";
 import { WidgetDecoration } from "@theia/core/lib/browser/widget-decoration";
 import { TriggerConfig } from "./trigger-interface";
+import { UUID } from "@theia/core/shared/@lumino/coreutils";
 
 
 
@@ -36,7 +37,7 @@ export class TriggerNode extends BaseNode {
 
     constructor(options: TriggerConfig) {
         super();
-        this.id = crypto.randomUUID();
+        this.id = UUID.uuid4();
         this.name = `${options.name}`;
         this.expanded = false;
         this.triggerData = options;

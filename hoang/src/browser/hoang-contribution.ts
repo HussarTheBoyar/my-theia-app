@@ -1,7 +1,7 @@
 import { Container, inject, injectable, interfaces } from '@theia/core/shared/inversify';
 import { MenuModelRegistry } from '@theia/core';
 import { HoangWidget } from './hoang-widget';
-import { AbstractViewContribution, codicon, createTreeContainer, defaultTreeProps, TreeProps } from '@theia/core/lib/browser';
+import { AbstractViewContribution, codicon, createTreeContainer, defaultTreeProps, TreeProps, Widget } from '@theia/core/lib/browser';
 import { Command, CommandRegistry } from '@theia/core/lib/common/command';
 import { FirstStepDialog } from './step1-dialog';
 import { TabBarToolbarContribution, TabBarToolbarRegistry } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
@@ -65,7 +65,9 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
             execute: async () => {
                 // Implement the import logic here
                 await this.demoDialog.open();
-            }
+            },
+            isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
+            isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
         });
     }
 
@@ -95,6 +97,11 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
             priority: 2,
             tooltip: TriggerCommand.IMPORT.label,
         });
+    }
+
+    get trigger(): HoangWidget | undefined {
+        const { currentWidget } = this.shell;
+        return currentWidget instanceof HoangWidget && currentWidget || undefined;
     }
 }
 

@@ -3,7 +3,7 @@ import { MenuModelRegistry } from '@theia/core';
 import { HoangWidget } from './hoang-widget';
 import { AbstractViewContribution, codicon, createTreeContainer, defaultTreeProps, TreeProps } from '@theia/core/lib/browser';
 import { Command, CommandRegistry } from '@theia/core/lib/common/command';
-import { DemoDialog } from './dialog';
+import { DemoDialog } from './step2-dialog';
 import { TabBarToolbarContribution, TabBarToolbarRegistry } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
 
 export const HoangCommand: Command = { id: 'hoang:command' };

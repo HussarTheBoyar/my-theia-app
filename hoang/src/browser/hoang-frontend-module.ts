@@ -4,7 +4,7 @@ import { createRISCVTriggerWidget, HoangContribution } from './hoang-contributio
 import { bindViewContribution, DialogProps, FrontendApplicationContribution, WidgetFactory } from '@theia/core/lib/browser';
 
 import '../../src/browser/style/index.css';
-import { DemoDialog, DemoDialogProps } from './dialog';
+import { DemoDialog, DemoDialogProps } from './step2-dialog';
 import { TabBarToolbarContribution } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
 
 export default new ContainerModule(bind => {

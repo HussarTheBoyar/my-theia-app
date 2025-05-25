@@ -18,7 +18,6 @@ import Typography from '@mui/material/Typography';
 @injectable()
 export class DemoDialogProps extends DialogProps {}
 
-// Define the state interface
 interface DialogState {
   sayhi: string;
   saylo: string;
@@ -40,8 +39,7 @@ export class DemoDialog extends ReactDialog<void> {
   @inject(MessageService)
   protected readonly messageService: MessageService;
 
-  // Define state with the interface
-  private state: DialogState = {
+  private static persistedState: DialogState = {
     sayhi: 'switch to debug mode',
     saylo: 'switch to debug mode',
     match: 'switch to debug mode',
@@ -57,14 +55,17 @@ export class DemoDialog extends ReactDialog<void> {
     triggerData: '',
   };
 
+  private state: DialogState;
+  private debounceTimeout: NodeJS.Timeout | null = null;
+
   constructor(
     @inject(DialogProps) protected readonly props: DialogProps
   ) {
     super(props);
+    this.state = { ...DemoDialog.persistedState };
     this.appendAcceptButton('Create Trigger');
     this.appendCloseButton('Back');
 
-    // Bind methods to ensure correct `this` context
     this.handleSelectChange = this.handleSelectChange.bind(this);
     this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
     this.handleTextChange = this.handleTextChange.bind(this);
@@ -74,15 +75,14 @@ export class DemoDialog extends ReactDialog<void> {
     return;
   }
 
-  // Handler for Select dropdowns
   private readonly handleSelectChange: (key: keyof DialogState) => (event: SelectChangeEvent) => void = (key) => (event) => {
     if (key === 'sayhi' || key === 'saylo' || key === 'match' || key === 'action' || key === 'matchControlType') {
-      this.state[key] = event.target.value as string;
+      this.state = { ...this.state, [key]: event.target.value };
+      DemoDialog.persistedState = { ...this.state };
+      this.update();
     }
-    this.update();
   };
 
-  // Handler for Checkboxes
   private readonly handleCheckboxChange: (key: keyof DialogState) => (event: React.ChangeEvent<HTMLInputElement>) => void = (key) => (event) => {
     if (
       key === 'dmode' ||
@@ -93,15 +93,24 @@ export class DemoDialog extends ReactDialog<void> {
       key === 'supervisorMode' ||
       key === 'userMode'
     ) {
-      this.state[key] = event.target.checked;
+      this.state = { ...this.state, [key]: event.target.checked };
+      DemoDialog.persistedState = { ...this.state };
+      this.update();
     }
-    this.update();
   };
 
-  // Handler for TextField
   private readonly handleTextChange: (event: React.ChangeEvent<HTMLInputElement>) => void = (event) => {
-    this.state.triggerData = event.target.value;
-    this.update();
+    const newValue = event.target.value;
+    this.state = { ...this.state, triggerData: newValue };
+
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+    }
+
+    this.debounceTimeout = setTimeout(() => {
+      DemoDialog.persistedState = { ...this.state };
+      this.update();
+    }, 500);
   };
 
   protected render(): React.ReactNode {
@@ -134,7 +143,8 @@ export class DemoDialog extends ReactDialog<void> {
                   }}
                 >
                   <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
-                  <MenuItem value="switch to debug mode">switch to</MenuItem>
+                  <MenuItem value="switch to mode">switch to mode</MenuItem>
+                  <MenuItem value="switch to debug">switch to debug</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -152,6 +162,7 @@ export class DemoDialog extends ReactDialog<void> {
                   }}
                 >
                   <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
+                  <MenuItem value="switch to mode">switch to mode</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -173,6 +184,7 @@ export class DemoDialog extends ReactDialog<void> {
                   }}
                 >
                   <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
+                  <MenuItem value="switch to debug">switch to debug</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -190,6 +202,7 @@ export class DemoDialog extends ReactDialog<void> {
                   }}
                 >
                   <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
+                  <MenuItem value="switch to debug">switch to debug</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -199,76 +212,34 @@ export class DemoDialog extends ReactDialog<void> {
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={6}>
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.dmode}
-                    onChange={this.handleCheckboxChange('dmode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
+                control={<Checkbox checked={this.state.dmode} onChange={this.handleCheckboxChange('dmode')} sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }} />}
                 label={<Typography sx={{ color: '#ffffff' }}>Dmode</Typography>}
               />
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.timing}
-                    onChange={this.handleCheckboxChange('timing')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
+                control={<Checkbox checked={this.state.timing} onChange={this.handleCheckboxChange('timing')} sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }} />}
                 label={<Typography sx={{ color: '#ffffff' }}>Timing</Typography>}
               />
               <Typography sx={{ color: '#ffffff', mt: 1 }}>Choose at least one mode:</Typography>
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.machineMode}
-                    onChange={this.handleCheckboxChange('machineMode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
+                control={<Checkbox checked={this.state.machineMode} onChange={this.handleCheckboxChange('machineMode')} sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }} />}
                 label={<Typography sx={{ color: '#ffffff' }}>Machine mode</Typography>}
               />
             </Grid>
             <Grid item xs={6}>
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.select}
-                    onChange={this.handleCheckboxChange('select')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
+                control={<Checkbox checked={this.state.select} onChange={this.handleCheckboxChange('select')} sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }} />}
                 label={<Typography sx={{ color: '#ffffff' }}>Select</Typography>}
               />
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.chain}
-                    onChange={this.handleCheckboxChange('chain')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
+                control={<Checkbox checked={this.state.chain} onChange={this.handleCheckboxChange('chain')} sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }} />}
                 label={<Typography sx={{ color: '#ffffff' }}>Chain</Typography>}
               />
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.supervisorMode}
-                    onChange={this.handleCheckboxChange('supervisorMode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
+                control={<Checkbox checked={this.state.supervisorMode} onChange={this.handleCheckboxChange('supervisorMode')} sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }} />}
                 label={<Typography sx={{ color: '#ffffff' }}>Supervisor mode</Typography>}
               />
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.userMode}
-                    onChange={this.handleCheckboxChange('userMode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
+                control={<Checkbox checked={this.state.userMode} onChange={this.handleCheckboxChange('userMode')} sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }} />}
                 label={<Typography sx={{ color: '#ffffff' }}>User mode</Typography>}
               />
             </Grid>
@@ -289,6 +260,9 @@ export class DemoDialog extends ReactDialog<void> {
                 }}
               >
                 <MenuItem value="">Select type</MenuItem>
+                <MenuItem value="type1">Type 1</MenuItem>
+                <MenuItem value="type2">Type 2</MenuItem>
+                <MenuItem value="type3">Type 3</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -315,17 +289,23 @@ export class DemoDialog extends ReactDialog<void> {
 
   protected override onAfterAttach(msg: Message): void {
     super.onAfterAttach(msg);
-    this.update();
   }
 
   @postConstruct()
   protected init(): void {
     this.title.label = 'Add Match Control Trigger';
-    this.update();
+    this.state = { ...DemoDialog.persistedState };
   }
 
   protected override async accept(): Promise<void> {
     this.messageService.info('Accepted');
     super.accept();
+  }
+
+  public override close(): void {
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+    }
+    super.close();
   }
 }

@@ -19,7 +19,7 @@ export namespace TriggerCommand {
 export class HoangContribution extends AbstractViewContribution<HoangWidget> implements TabBarToolbarContribution {
 
     @inject(FirstStepDialog)
-    protected readonly demoDialog: FirstStepDialog;
+    protected readonly firstDialog: FirstStepDialog;
 
     /**
      * `AbstractViewContribution` handles the creation and registering
@@ -64,7 +64,15 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
         commands.registerCommand(TriggerCommand.IMPORT, {
             execute: async () => {
                 // Implement the import logic here
-                await this.demoDialog.open();
+                const valueTrigger = await this.firstDialog.open();
+                if (valueTrigger) {
+                    const widget = await this.openView({ activate: true }); // get the widget instance
+                    if (widget instanceof HoangWidget) {
+                        widget.triggers.push(valueTrigger); // push the new trigger
+                        await widget.refreshView();         // refresh the tree view
+                        this.firstDialog.close();           // optionally close dialog
+                    }
+                }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
             isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger

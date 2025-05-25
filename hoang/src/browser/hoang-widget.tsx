@@ -6,6 +6,7 @@ import { codicon, CompositeTreeNode, ContextMenuRenderer, ExpandableTreeNode, La
 import { FirstStepDialog } from './step1-dialog';
 import { TriggerNode } from './common/ui-interface';
 import { TriggerConfig } from './common/trigger-interface';
+import Tooltip from '@mui/material/Tooltip';
 
 export interface Trigger extends TreeNode {
     children: TriggerNode[];
@@ -31,14 +32,14 @@ const TRIGGER_MOCK_DATA: TriggerConfig[] = [
         tdata1: {
             type: 2,
             dmode: true,
-            maskmax: 0,
+            maskmax: "0",
             hit: 0,
             select: true,
-            timing: 0,
-            sizelo: 0,
-            sizehi: 0,
-            action: 1,
-            match: 0,
+            timing: true,
+            sizelo: "0",
+            sizehi: "0",
+            action: "1",
+            match: "0",
             m: true,
             s: true,
             u: true,
@@ -57,14 +58,14 @@ const TRIGGER_MOCK_DATA: TriggerConfig[] = [
         tdata1: {
             type: 2,
             dmode: true,
-            maskmax: 0,
+            maskmax: "0",
             hit: 0,
             select: true,
-            timing: 0,
-            sizelo: 0,
-            sizehi: 0,
-            action: 1,
-            match: 0,
+            timing: true,
+            sizelo: "0",
+            sizehi: "0",
+            action: "1",
+            match: "0",
             m: true,
             s: true,
             u: true,
@@ -83,14 +84,14 @@ const TRIGGER_MOCK_DATA: TriggerConfig[] = [
         tdata1: {
             type: 2,
             dmode: true,
-            maskmax: 0,
+            maskmax: "0",
             hit: 0,
             select: true,
-            timing: 0,
-            sizelo: 0,
-            sizehi: 0,
-            action: 1,
-            match: 0,
+            timing: true,
+            sizelo: "0",
+            sizehi: "0",
+            action: "1",
+            match: "0",
             m: true,
             s: true,
             u: true,
@@ -115,6 +116,8 @@ export class HoangWidget extends TreeWidget {
 
     @inject(FirstStepDialog)
     protected readonly demoDialog!: FirstStepDialog;
+
+    public triggers = TRIGGER_MOCK_DATA;
 
     constructor(
         @inject(TreeProps) readonly props: TreeProps,
@@ -163,9 +166,8 @@ export class HoangWidget extends TreeWidget {
 
     protected async parseData(settingsDir: string): Promise<TriggerNode[]> {
         const triggerNodes: TriggerNode[] = [];
-        const triggers = TRIGGER_MOCK_DATA; // Replace with actual data fetching logic
 
-        for (const trigger of triggers ?? []) {
+        for (const trigger of this.triggers ?? []) {
             const triggerNode = await this.parseTrigger(trigger);
             triggerNode.parent = this.model.root;
             triggerNodes.push(triggerNode);
@@ -285,16 +287,42 @@ export class HoangWidget extends TreeWidget {
     protected renderInfoButton(node: TreeNode, props: NodeProps): React.ReactNode {
         const icon = codicon('info');
         const classNames = [TREE_NODE_SEGMENT_CLASS, 'xplor-trigger-button', icon];
-
+    
+        const triggerData = (node as TriggerNode).triggerData;
+    
+        const infoItems = [
+            { label: 'ID', value: triggerData.id },
+            { label: 'Name', value: triggerData.name },
+            { label: 'Type', value: triggerData.triggerType },
+            { label: 'Enabled', value: triggerData.isEnable ? 'Yes' : 'No' },
+        ];
+    
         return (
-            <button
-                type="button"
-                className={classNames.join(' ')}
-                title={`Info ${(node as TriggerNode).name}`}
-                tabIndex={0}
-                onClick={async e => await this.onInfoButtonClick(e, node as TriggerNode)}
-                aria-label={`Info ${(node as TriggerNode).name}`}
-            />
+            <Tooltip
+                title={
+                    <div style={{ fontSize: 12, maxWidth: 300 }}>
+                        {infoItems.map(item => (
+                            <div key={item.label} style={{ marginBottom: 4 }}>
+                                <strong>{item.label}:</strong> {item.value ?? 'N/A'}
+                            </div>
+                        ))}
+                    </div>
+                }
+                placement="top"
+                arrow
+            >
+                <button
+                    type="button"
+                    className={classNames.join(' ')}
+                    tabIndex={0}
+                    aria-label={`Info ${(node as TriggerNode).name}`}
+                    onClick={e => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        console.log('Trigger data:', triggerData);
+                    }}
+                />
+            </Tooltip>
         );
     }
 
@@ -329,24 +357,53 @@ export class HoangWidget extends TreeWidget {
         e.stopPropagation();
         e.preventDefault();
 
-        // Implement the logic to clear the trigger here
-        this.messageService.info(`Update ${node.name}`);
+        const index = this.triggers.findIndex(t => t.id === node.triggerData.id);
+        if (index === -1) {
+            this.messageService.warn(`Trigger "${node.name}" not found.`);
+            return;
+        }
+    
+        const updatedTrigger = await this.demoDialog.openWithData(node.triggerData);
+    
+        if (updatedTrigger) {
+            this.triggers[index] = {
+                ...this.triggers[index],
+                ...updatedTrigger
+            };
+    
+            await this.refreshView();
+    
+            this.messageService.info(`Trigger "${updatedTrigger.name}" updated.`);
+        }
     }
 
     private async onInfoButtonClick(e: React.MouseEvent<HTMLSpanElement, MouseEvent>, node: TriggerNode): Promise<void> {
         e.stopPropagation();
         e.preventDefault();
 
-        // Implement the logic to clear the trigger here
-        this.messageService.info(`Info ${node.name}`);
+        const index = this.triggers.findIndex(t => t.id === node.triggerData.id);
+
+        if (index !== -1) {
+            this.messageService.info(`Info for "${node.name}" (index: ${index})`);
+            console.log('Trigger config:', this.triggers[index]);
+        } else {
+            this.messageService.warn(`Trigger "${node.name}" not found`);
+        }
     }
 
     private async onClearButtonClick(e: React.MouseEvent<HTMLSpanElement, MouseEvent>, node: TriggerNode): Promise<void> {
         e.stopPropagation();
         e.preventDefault();
 
-        // Implement the logic to clear the trigger here
-        this.messageService.info(`Delete ${node.name}`);
+        const index = this.triggers.findIndex(t => t.id === node.triggerData.id);
+
+            if (index !== -1) {
+                this.triggers.splice(index, 1); 
+                await this.refreshView();       
+                this.messageService.info(`Trigger "${node.name}" deleted (index: ${index})`);
+            } else {
+                this.messageService.warn(`Trigger "${node.name}" not found`);
+            }
     }
 
 }

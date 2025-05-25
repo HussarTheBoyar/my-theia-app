@@ -13,26 +13,27 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { SecondStepDialog } from './step2-dialog';
+import { TriggerConfig } from './common/trigger-interface';
 
 @injectable()
 export class FirstStepDialogProps extends DialogProps {}
 
 interface DialogState {
-  age: string;
   triggerName: string;
   triggerType: string;
 }
 
 @injectable()
-export class FirstStepDialog extends ReactDialog<void> {
+export class FirstStepDialog extends ReactDialog<TriggerConfig> {
   @inject(MessageService)
   protected readonly messageService: MessageService;
 
   @inject(SecondStepDialog)
   protected readonly secondStepDialog: SecondStepDialog;
 
+  private finalConfig?: TriggerConfig;
+
   private static persistedState: DialogState = {
-    age: '',
     triggerName: '',
     triggerType: '',
   };
@@ -52,12 +53,18 @@ export class FirstStepDialog extends ReactDialog<void> {
     this.handleTextChange = this.handleTextChange.bind(this);
   }
 
-  get value(): void {
-    return;
+  get value(): TriggerConfig {
+    return this.finalConfig ?? {
+      name: this.state.triggerName,
+      id: '',
+      isEnable: true,
+      triggerType: this.state.triggerType as 'mcontrol' | 'icount' | 'itrigger' | 'etrigger',
+      tdata1: {} as any,
+    };
   }
 
   protected handleChange(event: SelectChangeEvent): void {
-    const newState = { ...this.state, age: event.target.value as string };
+    const newState = { ...this.state, triggerType: event.target.value as string };
     this.state = newState;
     FirstStepDialog.persistedState = { ...this.state };
     this.update();
@@ -140,7 +147,7 @@ export class FirstStepDialog extends ReactDialog<void> {
             </InputLabel>
             <Select
               labelId="demo-label"
-              value={this.state.age}
+              value={this.state.triggerType}
               label="Choose trigger type"
               onChange={this.handleChange}
               size="small"
@@ -152,9 +159,10 @@ export class FirstStepDialog extends ReactDialog<void> {
               }}
             >
               <MenuItem className="menu-item" value="">Select type</MenuItem>
-              <MenuItem value="ten">Ten</MenuItem>
-              <MenuItem value="twenty">Twenty</MenuItem>protected readonly secondStepDialog: SecondStepDialog;
-              <MenuItem value="thirty">Thirty</MenuItem>
+              <MenuItem value="mcontrol">mcontrol</MenuItem>
+              <MenuItem value="icount">icount</MenuItem>
+              <MenuItem value="itrigger">itrigger</MenuItem>
+              <MenuItem value="etrigger">etrigger</MenuItem>
             </Select>
           </FormControl>
           </FormGrid>
@@ -175,8 +183,31 @@ export class FirstStepDialog extends ReactDialog<void> {
     this.update();
   }
 
+  public async openWithData(trigger: TriggerConfig, isEdit = true): Promise<TriggerConfig | undefined> {
+    this.state = {
+        triggerName: trigger.name,
+        triggerType: trigger.triggerType
+    };
+    FirstStepDialog.persistedState = { ...this.state };
+    this.title.label = isEdit ? 'Edit Trigger' : 'Create Trigger';
+    this.update();
+
+    return super.open();
+  }
+
   protected override async accept(): Promise<void> {
-    this.secondStepDialog.open();
+    const config = await this.secondStepDialog.open();
+
+    if (config) {
+      // Save the result from second dialog
+      this.finalConfig = {
+        ...config,
+        name: this.state.triggerName,
+        triggerType: this.state.triggerType as any,
+      };
+    }
+    console.log('Final Trigger Config:', this.finalConfig);
+
     super.accept();
   }
 

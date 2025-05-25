@@ -17,14 +17,15 @@ export interface TriggerConfig {
 export interface MControl {
   type: 2;
   dmode: boolean;
-  maskmax: number;
+  maskmax: string;
   hit?: 0 | 1;
   select: boolean;
-  timing: number;
-  sizelo: number;
-  sizehi?: number; // Added sizehi property
-  action: number;
-  match: number;
+  timing: boolean;
+  sizelo: string;
+  sizehi?: string; // Added sizehi property
+  action: string;
+  match: string;
+  chain: boolean;
   m: boolean;
   s: boolean;
   u: boolean;
@@ -37,7 +38,7 @@ export interface MControl {
 export interface ICount {
   type: 3;
   dmode: boolean;
-  action: number;
+  action: string;
   count: number;
   hit?: 0 | 1;
   m: boolean;

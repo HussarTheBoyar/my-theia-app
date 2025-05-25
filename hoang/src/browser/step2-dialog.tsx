@@ -14,8 +14,9 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-// import { FirstStepDialog } from './step1-dialog';
 import FormLabel from '@mui/material/FormLabel';
+import { MControl, TriggerConfig } from './common/trigger-interface';
+import { UUID } from '@theia/core/shared/@lumino/coreutils';
 
 @injectable()
 export class SecondStepDialogProps extends DialogProps {}
@@ -35,14 +36,37 @@ interface DialogState {
   matchControlType: string;
   triggerData: string;
 }
-
 @injectable()
-export class SecondStepDialog extends ReactDialog<void> {
+export class SecondStepDialog extends ReactDialog<TriggerConfig> {
   @inject(MessageService)
   protected readonly messageService: MessageService;
 
-  // @inject(FirstStepDialog)
-  //   protected readonly firstStepDialog: FirstStepDialog;
+  public triggerConfig: Partial<TriggerConfig> = {};
+
+
+  private toTriggerConfig(): TriggerConfig {
+    return {
+      name: 'MatchControlTrigger', 
+      id: UUID.uuid4(),
+      isEnable: true,              
+      triggerType: 'mcontrol',     
+      mcontrolType: this.state.matchControlType, 
+      tdata1: {
+        action: this.state.action,
+        match: this.state.match,
+        sizehi: this.state.sizehi,
+        sizelo: this.state.sizelo,
+        dmode: this.state.dmode,
+        timing: this.state.timing,
+        select: this.state.select,
+        chain: this.state.chain,
+        m: this.state.machineMode,
+        s: this.state.supervisorMode,
+        u: this.state.userMode,
+      } as MControl,
+      tdata2: this.state.triggerData || undefined,
+    };
+  }
 
   private static persistedState: DialogState = {
     sizehi: 'switch to debug mode',
@@ -60,6 +84,7 @@ export class SecondStepDialog extends ReactDialog<void> {
     triggerData: '',
   };
 
+
   private state: DialogState;
   private debounceTimeout: NodeJS.Timeout | null = null;
 
@@ -76,14 +101,15 @@ export class SecondStepDialog extends ReactDialog<void> {
     this.handleTextChange = this.handleTextChange.bind(this);
   }
 
-  get value(): void {
-    return;
+  get value(): TriggerConfig {
+    return this.toTriggerConfig();
   }
 
   private readonly handleSelectChange: (key: keyof DialogState) => (event: SelectChangeEvent) => void = (key) => (event) => {
     if (key === 'sizehi' || key === 'sizelo' || key === 'match' || key === 'action' || key === 'matchControlType') {
       this.state = { ...this.state, [key]: event.target.value };
       SecondStepDialog.persistedState = { ...this.state };
+      Object.assign(this.triggerConfig, this.toTriggerConfig());
       this.update();
     }
   };
@@ -100,6 +126,7 @@ export class SecondStepDialog extends ReactDialog<void> {
     ) {
       this.state = { ...this.state, [key]: event.target.checked };
       SecondStepDialog.persistedState = { ...this.state };
+      Object.assign(this.triggerConfig, this.toTriggerConfig());
       this.update();
     }
   };
@@ -114,6 +141,7 @@ export class SecondStepDialog extends ReactDialog<void> {
 
     this.debounceTimeout = setTimeout(() => {
       SecondStepDialog.persistedState = { ...this.state };
+      Object.assign(this.triggerConfig, this.toTriggerConfig());
       this.update();
     }, 500);
   };
@@ -246,7 +274,6 @@ export class SecondStepDialog extends ReactDialog<void> {
           </Grid>
 
           {/* Checkboxes */}
-
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={6} sx={{ display: 'flex', flexDirection: 'column' }}>
               <FormControlLabel
@@ -328,8 +355,6 @@ export class SecondStepDialog extends ReactDialog<void> {
             </Grid>
           </Grid>
 
-
-
           {/* Match Control Type */}
           <Grid item xs={12} sx={{ mt: 2 }}>
           <FormGrid>
@@ -393,16 +418,21 @@ export class SecondStepDialog extends ReactDialog<void> {
 
   protected override onAfterAttach(msg: Message): void {
     super.onAfterAttach(msg);
+    this.update();
   }
 
   @postConstruct()
   protected init(): void {
     this.title.label = 'Add Match Control Trigger';
     this.state = { ...SecondStepDialog.persistedState };
+    Object.assign(this.triggerConfig, this.toTriggerConfig());
+    console.log('TriggerConfig:', this.triggerConfig);
   }
 
   protected override async accept(): Promise<void> {
     this.messageService.info('Accepted');
+    Object.assign(this.triggerConfig, this.toTriggerConfig());
+    console.log('TriggerConfig:', this.triggerConfig);
     super.accept();
   }
 
@@ -410,7 +440,6 @@ export class SecondStepDialog extends ReactDialog<void> {
     if (this.debounceTimeout) {
       clearTimeout(this.debounceTimeout);
     }
-    // this.firstStepDialog.open();
     super.close();
   }
 }

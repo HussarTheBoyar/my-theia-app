@@ -12,9 +12,10 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
+import { SecondStepDialog } from './step2-dialog';
 
 @injectable()
-export class DemoDialogProps extends DialogProps {}
+export class FirstStepDialogProps extends DialogProps {}
 
 interface DialogState {
   age: string;
@@ -23,9 +24,12 @@ interface DialogState {
 }
 
 @injectable()
-export class DemoDialog extends ReactDialog<void> {
+export class FirstStepDialog extends ReactDialog<void> {
   @inject(MessageService)
   protected readonly messageService: MessageService;
+
+  @inject(SecondStepDialog)
+  protected readonly secondStepDialog: SecondStepDialog;
 
   private static persistedState: DialogState = {
     age: '',
@@ -40,7 +44,7 @@ export class DemoDialog extends ReactDialog<void> {
     @inject(DialogProps) protected readonly props: DialogProps
   ) {
     super(props);
-    this.state = { ...DemoDialog.persistedState };
+    this.state = { ...FirstStepDialog.persistedState };
     this.appendAcceptButton('Create');
     this.appendCloseButton('Cancel');
 
@@ -55,7 +59,7 @@ export class DemoDialog extends ReactDialog<void> {
   protected handleChange(event: SelectChangeEvent): void {
     const newState = { ...this.state, age: event.target.value as string };
     this.state = newState;
-    DemoDialog.persistedState = { ...this.state };
+    FirstStepDialog.persistedState = { ...this.state };
     this.update();
   }
 
@@ -68,7 +72,7 @@ export class DemoDialog extends ReactDialog<void> {
     }
 
     this.debounceTimeout = setTimeout(() => {
-      DemoDialog.persistedState = { ...this.state };
+      FirstStepDialog.persistedState = { ...this.state };
       this.update();
     }, 300);
   };
@@ -83,11 +87,12 @@ export class DemoDialog extends ReactDialog<void> {
       display: 'flex',
       flexDirection: 'column',
     }));
+    
 
     return (
       <div
         className="xplor-ide-dialog xplor-ide-grid-container"
-        style={{ minWidth: '500px', padding: '16px', backgroundColor: '#1e2527', color: '#ffffff' }}
+        style={{ minWidth: '500px', padding: '28px', backgroundColor: 'none', color: '#ffffff' }}
         id="xplor-ide-create-project-dialog"
       >
         <Grid container spacing={3} flexDirection={'column'}>
@@ -96,7 +101,7 @@ export class DemoDialog extends ReactDialog<void> {
               htmlFor="trigger-name"
               className="title-form"
               required
-              sx={{ color: '#ffffff', marginBottom: '8px' }}
+              sx={{ color: '#ffffff', marginBottom: '3px' }}
             >
               Trigger name
             </FormLabel>
@@ -111,16 +116,25 @@ export class DemoDialog extends ReactDialog<void> {
               size="small"
               className="input-text"
               sx={{
-                backgroundColor: '#2d3537',
+                backgroundColor: '#41414C',
                 color: '#ffffff',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#3b82f6' },
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
               }}
             />
           </FormGrid>
+          <FormGrid>
+            <FormLabel
+              htmlFor="trigger-name"
+              className="title-form"
+              required
+              sx={{ color: '#ffffff', marginBottom: '3px' }}
+            >
+              Trigger type
+            </FormLabel>
           <FormControl fullWidth>
             <InputLabel
               id="demo-label"
-              sx={{ color: '#ffffff' }}
+              sx={{ color: '#ffffff', top: '-9px' }}
             >
               Choose trigger type
             </InputLabel>
@@ -129,19 +143,21 @@ export class DemoDialog extends ReactDialog<void> {
               value={this.state.age}
               label="Choose trigger type"
               onChange={this.handleChange}
+              size="small"
               sx={{
-                backgroundColor: '#2d3537',
+                backgroundColor: '#41414C',
                 color: '#ffffff',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#3b82f6' },
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
                 '& .MuiSelect-icon': { color: '#ffffff' },
               }}
             >
               <MenuItem className="menu-item" value="">Select type</MenuItem>
               <MenuItem value="ten">Ten</MenuItem>
-              <MenuItem value="twenty">Twenty</MenuItem>
+              <MenuItem value="twenty">Twenty</MenuItem>protected readonly secondStepDialog: SecondStepDialog;
               <MenuItem value="thirty">Thirty</MenuItem>
             </Select>
           </FormControl>
+          </FormGrid>
         </Grid>
       </div>
     );
@@ -155,12 +171,12 @@ export class DemoDialog extends ReactDialog<void> {
   @postConstruct()
   protected init(): void {
     this.title.label = 'Create a new project';
-    this.state = { ...DemoDialog.persistedState };
+    this.state = { ...FirstStepDialog.persistedState };
     this.update();
   }
 
   protected override async accept(): Promise<void> {
-    this.messageService.info('Accepted');
+    this.secondStepDialog.open();
     super.accept();
   }
 

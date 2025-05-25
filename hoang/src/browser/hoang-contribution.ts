@@ -3,7 +3,7 @@ import { MenuModelRegistry } from '@theia/core';
 import { HoangWidget } from './hoang-widget';
 import { AbstractViewContribution, codicon, createTreeContainer, defaultTreeProps, TreeProps } from '@theia/core/lib/browser';
 import { Command, CommandRegistry } from '@theia/core/lib/common/command';
-import { DemoDialog } from './step2-dialog';
+import { FirstStepDialog } from './step1-dialog';
 import { TabBarToolbarContribution, TabBarToolbarRegistry } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
 
 export const HoangCommand: Command = { id: 'hoang:command' };
@@ -18,8 +18,8 @@ export namespace TriggerCommand {
 @injectable()
 export class HoangContribution extends AbstractViewContribution<HoangWidget> implements TabBarToolbarContribution {
 
-    @inject(DemoDialog)
-    protected readonly demoDialog: DemoDialog;
+    @inject(FirstStepDialog)
+    protected readonly demoDialog: FirstStepDialog;
 
     /**
      * `AbstractViewContribution` handles the creation and registering

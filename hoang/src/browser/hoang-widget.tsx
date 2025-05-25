@@ -3,7 +3,7 @@ import { injectable, postConstruct, inject } from '@theia/core/shared/inversify'
 // import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MenuPath, MessageService, nls } from '@theia/core';
 import { codicon, CompositeTreeNode, ContextMenuRenderer, ExpandableTreeNode, LabelProvider, Message, NodeProps, TREE_NODE_CONTENT_CLASS, TREE_NODE_SEGMENT_CLASS, TreeModel, TreeNode, TreeProps, TreeWidget } from '@theia/core/lib/browser';
-import { DemoDialog } from './step2-dialog';
+import { FirstStepDialog } from './step1-dialog';
 import { TriggerNode } from './common/ui-interface';
 import { TriggerConfig } from './common/trigger-interface';
 
@@ -113,8 +113,8 @@ export class HoangWidget extends TreeWidget {
     @inject(MessageService)
     protected readonly messageService!: MessageService;
 
-    @inject(DemoDialog)
-    protected readonly demoDialog!: DemoDialog;
+    @inject(FirstStepDialog)
+    protected readonly demoDialog!: FirstStepDialog;
 
     constructor(
         @inject(TreeProps) readonly props: TreeProps,

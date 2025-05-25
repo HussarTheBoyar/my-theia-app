@@ -19,28 +19,25 @@
 .theia-TreeNode:hover .xplor-trigger-button {
     visibility: visible;
 }
-.grid-content {
-    display: flex;
-    flex-direction: column;
-}
 
 .lm-Widget.dialogOverlay .dialogTitle {
     color: #ffffff;
     font-size: 16px;
     font-weight: 500;
     padding: 35px 30px 10px 35px;
-    background-color: #593B56;
+    background-color: #28272C;
 }
+
 
 .lm-Widget.dialogOverlay .dialogContent {
     z-index: 1;
-    background-color: #593B56;
+    background-color: #28272C;
     padding-left: 30px;
     padding-right: 30px;
 }
 
 .lm-Widget.dialogOverlay .dialogControl {
-    background-color: #593B56;
+    background-color: #28272C;
     padding: 10px 35px 35px 35px;
 }
 
@@ -71,4 +68,16 @@
 }
 .css-10nakn3-MuiModal-root-MuiPopover-root-MuiMenu-root {
     z-index: 6000;
+}
+
+.css-4nssmw-MuiFormLabel-root-MuiInputLabel-root {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.5s linear;
+}
+
+.css-k9tl0o-MuiFormLabel-root-MuiInputLabel-root {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 0.5s linear;
 }

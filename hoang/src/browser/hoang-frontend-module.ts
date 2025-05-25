@@ -4,8 +4,9 @@ import { createRISCVTriggerWidget, HoangContribution } from './hoang-contributio
 import { bindViewContribution, DialogProps, FrontendApplicationContribution, WidgetFactory } from '@theia/core/lib/browser';
 
 import '../../src/browser/style/index.css';
-import { DemoDialog, DemoDialogProps } from './step2-dialog';
 import { TabBarToolbarContribution } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
+import { SecondStepDialog, SecondStepDialogProps } from './step2-dialog';
+import { FirstStepDialog, FirstStepDialogProps } from './step1-dialog';
 
 export default new ContainerModule(bind => {
     bindViewContribution(bind, HoangContribution);
@@ -17,9 +18,14 @@ export default new ContainerModule(bind => {
         id: HoangWidget.ID,
         createWidget: () => ctx.container.get<HoangWidget>(HoangWidget)
     })).inSingletonScope();
-    bind(DemoDialog).toSelf().inSingletonScope();
+    bind(FirstStepDialog).toSelf().inSingletonScope();
+    bind(SecondStepDialog).toSelf().inSingletonScope();
+
     bind(DialogProps).toConstantValue({ title: 'Add New Trigger' });
-    bind(DemoDialogProps).toConstantValue({ title: 'Create Project' });
+    
+    bind(FirstStepDialogProps).toConstantValue({ title: 'Create Project' });
+    bind(SecondStepDialogProps).toConstantValue({ title: 'Create Project' });
+
 
     for (const identifier of [TabBarToolbarContribution]) {
         bind(identifier).toService(HoangContribution);

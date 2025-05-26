@@ -5,7 +5,7 @@ import { inject, injectable, postConstruct } from '@theia/core/shared/inversify'
 
 import FormLabel from '@mui/material/FormLabel';
 import Grid from '@mui/material/Grid';
-import OutlinedInput from '@mui/material/OutlinedInput';
+import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 import * as React from 'react';
 import InputLabel from '@mui/material/InputLabel';
@@ -39,7 +39,6 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
   };
 
   private state: DialogState;
-  private debounceTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     @inject(DialogProps) protected readonly props: DialogProps
@@ -50,7 +49,7 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
     this.appendCloseButton('Cancel');
 
     this.handleChange = this.handleChange.bind(this);
-    this.handleTextChange = this.handleTextChange.bind(this);
+    this.handleTriggerNameChange = this.handleTriggerNameChange.bind(this);
   }
 
   get value(): TriggerConfig {
@@ -70,19 +69,14 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
     this.update();
   }
 
-  private readonly handleTextChange: (key: keyof DialogState) => (event: React.ChangeEvent<HTMLInputElement>) => void = (key) => (event) => {
-    const newValue = event.target.value;
-    this.state = { ...this.state, [key]: newValue };
-
-    if (this.debounceTimeout) {
-      clearTimeout(this.debounceTimeout);
-    }
-
-    this.debounceTimeout = setTimeout(() => {
-      FirstStepDialog.persistedState = { ...this.state };
-      this.update();
-    }, 300);
-  };
+  private readonly handleTriggerNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newTriggerName = event.target.value;
+    this.state = { ...this.state, triggerName: newTriggerName };
+  
+    
+    FirstStepDialog.persistedState = { ...this.state };
+    this.update();
+  }
 
   protected render(): React.ReactNode {
     const loaderLine = document.getElementById('loader-line') as HTMLInputElement;
@@ -94,7 +88,33 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
       display: 'flex',
       flexDirection: 'column',
     }));
+
+    const commonSelectStyle = {
+      '& .MuiInputBase-root': {
+        height: 40,
+      },
+      backgroundColor: '#41414C',
+      color: '#ffffff',
+      '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
+      '& .MuiSelect-icon': { color: '#ffffff' },
+    };
     
+    const commonMenuProps = {
+      PaperProps: {
+        sx: {
+          backgroundColor: '#2c2c34',
+          color: '#ffffff',
+          '& .MuiMenuItem-root': {
+            '&.Mui-selected': {
+              backgroundColor: '#3a3a45',
+            },
+            '&:hover': {
+              backgroundColor: '#50505f',
+            },
+          },
+        },
+      },
+    };
 
     return (
       <div
@@ -103,69 +123,76 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
         id="xplor-ide-create-project-dialog"
       >
         <Grid container spacing={3} flexDirection={'column'}>
+        <Grid item xs={12} sx={{ mt: 1, padding: 0 }}>
+            <FormControl fullWidth>
+              <FormLabel
+                htmlFor="trigger-name"
+                className="title-form"
+                required
+                sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
+              >
+                Trigger name
+              </FormLabel>
+              <TextField
+                id="trigger-name"
+                fullWidth
+                variant="outlined"
+                value={this.state.triggerName}
+                onChange={this.handleTriggerNameChange}
+                placeholder="Enter trigger name"
+                sx={{
+                  '& .MuiInputBase-root': {
+                    height: 40,
+                    backgroundColor: '#41414C',
+                    color: '#ffffff',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(255, 255, 255, 0.23)',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#ffffff',
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#90caf9',
+                  },
+                }}
+                InputLabelProps={{ shrink: true }}
+                size="small"
+                required
+              />
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sx={{ mt: 1, padding: 0 }}>
           <FormGrid>
             <FormLabel
               htmlFor="trigger-name"
               className="title-form"
               required
-              sx={{ color: '#ffffff', marginBottom: '3px' }}
+              sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
             >
-              Trigger name
+              Trigger Type
             </FormLabel>
-            <OutlinedInput
-              id="trigger-name"
-              name="trigger-name"
-              type="text"
-              placeholder="Enter trigger name"
-              value={this.state.triggerName}
-              onChange={this.handleTextChange('triggerName')}
-              required
-              size="small"
-              className="input-text"
-              sx={{
-                backgroundColor: '#41414C',
-                color: '#ffffff',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
-              }}
-            />
-          </FormGrid>
-          <FormGrid>
-            <FormLabel
-              htmlFor="trigger-name"
-              className="title-form"
-              required
-              sx={{ color: '#ffffff', marginBottom: '3px' }}
-            >
-              Trigger type
-            </FormLabel>
-          <FormControl fullWidth>
-            <InputLabel
-              id="demo-label"
-              sx={{ color: '#ffffff', top: '-9px' }}
-            >
-              Choose trigger type
-            </InputLabel>
-            <Select
-              labelId="demo-label"
-              value={this.state.triggerType}
-              label="Choose trigger type"
-              onChange={this.handleChange}
-              size="small"
-              sx={{
-                backgroundColor: '#41414C',
-                color: '#ffffff',
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
-                '& .MuiSelect-icon': { color: '#ffffff' },
-              }}
-            >
+            <FormControl fullWidth variant="outlined">
+              <Select
+                value={this.state.triggerType}
+                onChange={this.handleChange}
+                sx={commonSelectStyle}
+                MenuProps={commonMenuProps}
+                displayEmpty
+              >
               <MenuItem className="menu-item" value="">Select type</MenuItem>
               <MenuItem value="mcontrol">mcontrol</MenuItem>
               <MenuItem value="icount">icount</MenuItem>
               <MenuItem value="itrigger">itrigger</MenuItem>
               <MenuItem value="etrigger">etrigger</MenuItem>
-            </Select>
-          </FormControl>
+              </Select>
+            </FormControl>
           </FormGrid>
+          </Grid>
         </Grid>
       </div>
     );
@@ -212,9 +239,6 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
   }
 
   public override close(): void {
-    if (this.debounceTimeout) {
-      clearTimeout(this.debounceTimeout);
-    }
     super.close();
   }
 }

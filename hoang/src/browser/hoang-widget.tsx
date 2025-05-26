@@ -40,6 +40,7 @@ const TRIGGER_MOCK_DATA: TriggerConfig[] = [
             sizehi: "0",
             action: "1",
             match: "0",
+            chain: true,
             m: true,
             s: true,
             u: true,
@@ -66,6 +67,7 @@ const TRIGGER_MOCK_DATA: TriggerConfig[] = [
             sizehi: "0",
             action: "1",
             match: "0",
+            chain: true,
             m: true,
             s: true,
             u: true,
@@ -92,6 +94,7 @@ const TRIGGER_MOCK_DATA: TriggerConfig[] = [
             sizehi: "0",
             action: "1",
             match: "0",
+            chain: true ,
             m: true,
             s: true,
             u: true,
@@ -374,20 +377,6 @@ export class HoangWidget extends TreeWidget {
             await this.refreshView();
     
             this.messageService.info(`Trigger "${updatedTrigger.name}" updated.`);
-        }
-    }
-
-    private async onInfoButtonClick(e: React.MouseEvent<HTMLSpanElement, MouseEvent>, node: TriggerNode): Promise<void> {
-        e.stopPropagation();
-        e.preventDefault();
-
-        const index = this.triggers.findIndex(t => t.id === node.triggerData.id);
-
-        if (index !== -1) {
-            this.messageService.info(`Info for "${node.name}" (index: ${index})`);
-            console.log('Trigger config:', this.triggers[index]);
-        } else {
-            this.messageService.warn(`Trigger "${node.name}" not found`);
         }
     }
 

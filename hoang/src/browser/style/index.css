@@ -24,7 +24,7 @@
     color: #ffffff;
     font-size: 16px;
     font-weight: 500;
-    padding: 35px 30px 10px 35px;
+    padding: 40px 35px 10px 40px;
     background-color: #28272C;
 }
 
@@ -32,13 +32,20 @@
 .lm-Widget.dialogOverlay .dialogContent {
     z-index: 1;
     background-color: #28272C;
-    padding-left: 30px;
-    padding-right: 30px;
+    padding-left: 19px;
+    padding-right: 40px;
+
 }
 
 .lm-Widget.dialogOverlay .dialogControl {
     background-color: #28272C;
-    padding: 10px 35px 35px 35px;
+    padding: 10px 40px 40px 40px;
+
+}
+
+
+.lm-Widget.dialogOverlay .dialogBlock {
+    width: 630px;
 }
 
 .title-form {
@@ -80,4 +87,8 @@
     visibility: hidden;
     opacity: 0;
     transition: visibility 0s, opacity 0.5s linear;
+}
+
+.css-12ews02-MuiInputBase-root-MuiOutlinedInput-root-MuiSelect-root{
+    height: 40px;
 }

@@ -6,7 +6,6 @@ import * as React from 'react';
 
 import Grid from '@mui/material/Grid';
 import { styled } from '@mui/material/styles';
-import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
@@ -23,6 +22,7 @@ export class SecondStepDialogProps extends DialogProps {}
 
 interface DialogState {
   sizehi: string;
+  maskmax: string;
   sizelo: string;
   match: string;
   action: string;
@@ -41,6 +41,15 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
   @inject(MessageService)
   protected readonly messageService: MessageService;
 
+  private setDialogState(partialState: Partial<DialogState>, shouldUpdate = false) {
+    this.state = { ...this.state, ...partialState };
+    SecondStepDialog.persistedState = { ...this.state };
+    Object.assign(this.triggerConfig, this.toTriggerConfig());
+    if (shouldUpdate) {
+      this.update();
+    }
+  }
+
   public triggerConfig: Partial<TriggerConfig> = {};
 
 
@@ -56,6 +65,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
         match: this.state.match,
         sizehi: this.state.sizehi,
         sizelo: this.state.sizelo,
+        maskmax: this.state.maskmax,
         dmode: this.state.dmode,
         timing: this.state.timing,
         select: this.state.select,
@@ -73,6 +83,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
     sizelo: 'switch to debug mode',
     match: 'switch to debug mode',
     action: 'switch to debug mode',
+    maskmax: 'switch to debug mode',
     dmode: false,
     timing: false,
     select: false,
@@ -86,7 +97,6 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
 
 
   private state: DialogState;
-  private debounceTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     @inject(DialogProps) protected readonly props: DialogProps
@@ -106,7 +116,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
   }
 
   private readonly handleSelectChange: (key: keyof DialogState) => (event: SelectChangeEvent) => void = (key) => (event) => {
-    if (key === 'sizehi' || key === 'sizelo' || key === 'match' || key === 'action' || key === 'matchControlType') {
+    if (key === 'sizehi' || key === 'sizelo' || key === 'match' || key === 'action' || key === 'maskmax' || key === 'matchControlType') {
       this.state = { ...this.state, [key]: event.target.value };
       SecondStepDialog.persistedState = { ...this.state };
       Object.assign(this.triggerConfig, this.toTriggerConfig());
@@ -131,19 +141,9 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
     }
   };
 
-  private readonly handleTextChange: (event: React.ChangeEvent<HTMLInputElement>) => void = (event) => {
-    const newValue = event.target.value;
-    this.state = { ...this.state, triggerData: newValue };
-
-    if (this.debounceTimeout) {
-      clearTimeout(this.debounceTimeout);
-    }
-
-    this.debounceTimeout = setTimeout(() => {
-      SecondStepDialog.persistedState = { ...this.state };
-      Object.assign(this.triggerConfig, this.toTriggerConfig());
-      this.update();
-    }, 500);
+  private readonly handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('TriggerData:', event.target.value);
+    this.setDialogState({ triggerData: event.target.value });
   };
 
   protected render(): React.ReactNode {
@@ -155,19 +155,49 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
     const FormGrid = styled(Grid)(() => ({
       display: 'flex',
       flexDirection: 'column',
+      width: '100%',
+      margin: 0,
+      padding: 0,
     }));
 
+    const commonSelectStyle = {
+      '& .MuiInputBase-root': {
+        height: 40,
+      },
+      backgroundColor: '#41414C',
+      color: '#ffffff',
+      '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
+      '& .MuiSelect-icon': { color: '#ffffff' },
+    };
+
+    const commonMenuProps = {
+      PaperProps: {
+        sx: {
+          backgroundColor: '#2c2c34',
+          color: '#ffffff',
+          '& .MuiMenuItem-root': {
+            '&.Mui-selected': {
+              backgroundColor: '#3a3a45',
+            },
+            '&:hover': {
+              backgroundColor: '#50505f',
+            },
+          },
+        },
+      },
+    };
+
     return (
-      <div style={{ padding: '16px', backgroundColor: '#1e2527', color: '#ffffff' }}>
+      <div style={{ padding: 0, paddingLeft: -16, backgroundColor: 'none', color: '#ffffff', width: '100%' }}>
         <FormGrid container spacing={2}>
           {/* sizehi and sizelo */}
-          <Grid container spacing={2}>
-            <Grid item xs={6}>
+          <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
+            <Grid item xs={6} sx={{ padding: 0 }}>
               <FormGrid>
                 <FormLabel
                   htmlFor="trigger-name"
                   className="title-form"
-                  sx={{ color: '#ffffff', marginBottom: '3px' }}
+                  sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
                 >
                   Sizehi
                 </FormLabel>
@@ -175,12 +205,8 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                 <Select
                   value={this.state.sizehi}
                   onChange={this.handleSelectChange('sizehi')}
-                  sx={{
-                    backgroundColor: '#41414C',
-                    color: '#ffffff',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
-                    '& .MuiSelect-icon': { color: '#ffffff' },
-                  }}
+                  sx={commonSelectStyle}
+                  MenuProps={commonMenuProps}
                 >
                   <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
                   <MenuItem value="switch to mode">switch to mode</MenuItem>
@@ -189,12 +215,12 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
               </FormControl>
               </FormGrid>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={6} sx={{ padding: 0 }}>
             <FormGrid>
                 <FormLabel
                   htmlFor="trigger-name"
                   className="title-form"
-                  sx={{ color: '#ffffff', marginBottom: '3px' }}
+                  sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
                 >
                   Sizelo
                 </FormLabel>
@@ -202,12 +228,8 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                 <Select
                   value={this.state.sizelo}
                   onChange={this.handleSelectChange('sizelo')}
-                  sx={{
-                    backgroundColor: '#41414C',
-                    color: '#ffffff',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
-                    '& .MuiSelect-icon': { color: '#ffffff' },
-                  }}
+                  sx={commonSelectStyle}
+                  MenuProps={commonMenuProps}
                 >
                   <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
                   <MenuItem value="switch to mode">switch to mode</MenuItem>
@@ -218,13 +240,13 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
           </Grid>
 
           {/* Match and Action */}
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={6}>
+          <Grid container spacing={2} sx={{ mt: 0.5, margin: 0, width: '100%' }}>
+            <Grid item xs={6} sx={{ padding: 0 }}>
             <FormGrid>
                 <FormLabel
                   htmlFor="trigger-name"
                   className="title-form"
-                  sx={{ color: '#ffffff', marginBottom: '3px' }}
+                  sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
                 >
                   Match
                 </FormLabel>
@@ -232,12 +254,8 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                 <Select
                   value={this.state.match}
                   onChange={this.handleSelectChange('match')}
-                  sx={{
-                    backgroundColor: '#41414C',
-                    color: '#ffffff',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
-                    '& .MuiSelect-icon': { color: '#ffffff' },
-                  }}
+                  sx={commonSelectStyle}
+                  MenuProps={commonMenuProps}
                 >
                   <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
                   <MenuItem value="switch to debug">switch to debug</MenuItem>
@@ -245,12 +263,12 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
               </FormControl>
               </FormGrid>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={6} sx={{ padding: 0 }}>
             <FormGrid>
                 <FormLabel
                   htmlFor="trigger-name"
                   className="title-form"
-                  sx={{ color: '#ffffff', marginBottom: '3px' }}
+                  sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
                 >
                   Action
                 </FormLabel>
@@ -258,125 +276,163 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                 <Select
                   value={this.state.action}
                   onChange={this.handleSelectChange('action')}
-                  sx={{
-                    backgroundColor: '#41414C',
-                    color: '#ffffff',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
-                    '& .MuiSelect-icon': { color: '#ffffff' },
-                  }}
+                  sx={commonSelectStyle}
+                  MenuProps={commonMenuProps}
                 >
                   <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
                   <MenuItem value="switch to debug">switch to debug</MenuItem>
                 </Select>
               </FormControl>
               </FormGrid>
-            </Grid>
+            </Grid>           
           </Grid>
 
-          {/* Checkboxes */}
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.dmode}
-                    onChange={this.handleCheckboxChange('dmode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
-                label={<Typography sx={{ color: '#ffffff' }}>Dmode</Typography>}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.timing}
-                    onChange={this.handleCheckboxChange('timing')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
-                label={<Typography sx={{ color: '#ffffff' }}>Timing</Typography>}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.select}
-                    onChange={this.handleCheckboxChange('select')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
-                label={<Typography sx={{ color: '#ffffff' }}>Select</Typography>}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.chain}
-                    onChange={this.handleCheckboxChange('chain')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
-                label={<Typography sx={{ color: '#ffffff' }}>Chain</Typography>}
-              />
+            {/* ✅ Maskmax */}
+            <Grid container spacing={2} sx={{ mt: 0.5, margin: 0, width: '100%' }}>
+              <Grid item xs={6} sx={{ padding: 0 }}>
+                <FormGrid>
+                  <FormLabel
+                    htmlFor="maskmax"
+                    className="title-form"
+                    sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
+                  >
+                    Maskmax
+                  </FormLabel>
+                  <FormControl fullWidth variant="outlined">
+                    <Select
+                      value={this.state.maskmax}
+                      onChange={this.handleSelectChange('maskmax')}
+                      sx={commonSelectStyle}
+                      MenuProps={commonMenuProps}
+                    >
+                      <MenuItem value="">Select Maskmax</MenuItem>
+                      <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
+                      <MenuItem value="max2">Max 2</MenuItem>
+                      <MenuItem value="max3">Max 3</MenuItem>
+                    </Select>
+                  </FormControl>
+                </FormGrid>
+              </Grid>
+            </Grid>
+          
+          {/* Checkboxes - Row 1 (4 items) */}
+          <Grid container spacing={2} sx={{ mt: 0.5, margin: 0, width: '100%' }}>
+              <Grid item xs={3} sx={{ padding: 0 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={this.state.dmode}
+                      onChange={this.handleCheckboxChange('dmode')}
+                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    />
+                  }
+                  label={<Typography sx={{ color: '#ffffff' }}>Dmode</Typography>}
+                />
+              </Grid>
+              <Grid item xs={3} sx={{ padding: 0 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={this.state.timing}
+                      onChange={this.handleCheckboxChange('timing')}
+                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    />
+                  }
+                  label={<Typography sx={{ color: '#ffffff' }}>Timing</Typography>}
+                />
+              </Grid>
+              <Grid item xs={3} sx={{ padding: 0 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={this.state.select}
+                      onChange={this.handleCheckboxChange('select')}
+                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    />
+                  }
+                  label={<Typography sx={{ color: '#ffffff' }}>Select</Typography>}
+                />
+              </Grid>
+              <Grid item xs={3} sx={{ padding: 0 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={this.state.chain}
+                      onChange={this.handleCheckboxChange('chain')}
+                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    />
+                  }
+                  label={<Typography sx={{ color: '#ffffff' }}>Chain</Typography>}
+                />
+              </Grid>
             </Grid>
 
-            <Grid item xs={6} sx={{ display: 'flex', flexDirection: 'column' }}>
-              <Typography sx={{ color: '#ffffff', mb: 1 }}>
+            {/* Centered Title between 2 checkbox rows */}
+            <Grid container sx={{ mt: 0.5, margin: 0, width: '100%', paddingLeft: '16px' }}>
+              <Typography sx={{ color: '#ffffff', fontWeight: '500', fontSize: '14px' }} className='title-form'>
                 Choose at least one mode:
               </Typography>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.machineMode}
-                    onChange={this.handleCheckboxChange('machineMode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
-                label={<Typography sx={{ color: '#ffffff' }}>Machine mode</Typography>}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.supervisorMode}
-                    onChange={this.handleCheckboxChange('supervisorMode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
-                label={<Typography sx={{ color: '#ffffff' }}>Supervisor mode</Typography>}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={this.state.userMode}
-                    onChange={this.handleCheckboxChange('userMode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                  />
-                }
-                label={<Typography sx={{ color: '#ffffff' }}>User mode</Typography>}
-              />
             </Grid>
-          </Grid>
+
+            {/* Checkboxes - Row 2 (3 items) */}
+            <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
+              <Grid item xs={4} sx={{ padding: 0 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={this.state.machineMode}
+                      onChange={this.handleCheckboxChange('machineMode')}
+                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    />
+                  }
+                  label={<Typography sx={{ color: '#ffffff' }}>Machine mode</Typography>}
+                />
+              </Grid>
+              <Grid item xs={4} sx={{ padding: 0 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={this.state.supervisorMode}
+                      onChange={this.handleCheckboxChange('supervisorMode')}
+                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    />
+                  }
+                  label={<Typography sx={{ color: '#ffffff' }}>Supervisor mode</Typography>}
+                />
+              </Grid>
+              <Grid item xs={4} sx={{ padding: 0 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={this.state.userMode}
+                      onChange={this.handleCheckboxChange('userMode')}
+                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    />
+                  }
+                  label={<Typography sx={{ color: '#ffffff' }}>User mode</Typography>}
+                />
+              </Grid>
+            </Grid>
+
 
           {/* Match Control Type */}
-          <Grid item xs={12} sx={{ mt: 2 }}>
+          <Grid item xs={12} sx={{ mt: 1, padding: 0 }}>
           <FormGrid>
-                <FormLabel
-                  htmlFor="trigger-name"
-                  className="title-form"
-                  required
-                  sx={{ color: '#ffffff', marginBottom: '3px' }}
-                >
-                  Match control type
-                </FormLabel>
+            <FormLabel
+              htmlFor="trigger-name"
+              className="title-form"
+              required
+              sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
+            >
+              Match control type
+            </FormLabel>
             <FormControl fullWidth variant="outlined">
-              <InputLabel sx={{ color: '#ffffff' }}>Choose match control type</InputLabel>
               <Select
                 value={this.state.matchControlType}
                 onChange={this.handleSelectChange('matchControlType')}
-                sx={{
-                  backgroundColor: '#41414C',
-                  color: '#ffffff',
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
-                  '& .MuiSelect-icon': { color: '#ffffff' },
-                }}
+                sx={commonSelectStyle}
+                MenuProps={commonMenuProps}
+                displayEmpty
               >
                 <MenuItem value="">Select type</MenuItem>
                 <MenuItem value="type1">Type 1</MenuItem>
@@ -388,28 +444,36 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
           </Grid>
 
           {/* Trigger Data */}
-          <Grid item xs={12} sx={{ mt: 2 }}>
-          <FormGrid>
-                <FormLabel
-                  htmlFor="trigger-name"
-                  className="title-form"
-                  required
-                  sx={{ color: '#ffffff', marginBottom: '3px' }}
-                >
-                  Trigger data 2
-                </FormLabel>
-            <TextField
-              fullWidth
-              variant="outlined"
-              value={this.state.triggerData}
-              onChange={this.handleTextChange}
-              placeholder="Enter Trigger data 2"
-              sx={{
-                '& .MuiInputBase-root': { backgroundColor: '#41414C', color: '#ffffff' },
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
-              }}
-            />
-          </FormGrid>
+          <Grid item xs={12} sx={{ mt: 1, padding: 0 }}>
+            <FormControl fullWidth>
+              <FormLabel
+                htmlFor="trigger-name"
+                className="title-form"
+                required
+                sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
+              >
+                Trigger data 2
+              </FormLabel>
+              <TextField
+                fullWidth
+                variant="outlined"
+                defaultValue={this.state.triggerData}
+                onChange={(e) => {
+                  this.state.triggerData = e.target.value;
+                  SecondStepDialog.persistedState.triggerData = e.target.value;
+                  Object.assign(this.triggerConfig, this.toTriggerConfig());
+                }}
+                placeholder="Enter Trigger data 2"
+                sx={{
+                  '& .MuiInputBase-root': {
+                    height: 40,
+                    backgroundColor: '#41414C',
+                    color: '#ffffff',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
+                }}
+              />
+            </FormControl>
           </Grid>
         </FormGrid>
       </div>
@@ -437,9 +501,6 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
   }
 
   public override close(): void {
-    if (this.debounceTimeout) {
-      clearTimeout(this.debounceTimeout);
-    }
     super.close();
   }
 }

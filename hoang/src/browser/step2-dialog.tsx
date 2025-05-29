@@ -36,6 +36,7 @@ interface DialogState {
   matchControlType: string;
   triggerData: string;
 }
+
 @injectable()
 export class SecondStepDialog extends ReactDialog<TriggerConfig> {
   @inject(MessageService)
@@ -52,14 +53,13 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
 
   public triggerConfig: Partial<TriggerConfig> = {};
 
-
   private toTriggerConfig(): TriggerConfig {
     return {
-      name: 'MatchControlTrigger', 
+      name: 'MatchControlTrigger',
       id: UUID.uuid4(),
-      isEnable: true,              
-      triggerType: 'mcontrol',     
-      mcontrolType: this.state.matchControlType, 
+      isEnable: true,
+      triggerType: 'mcontrol',
+      mcontrolType: this.state.matchControlType,
       tdata1: {
         action: this.state.action,
         match: this.state.match,
@@ -94,7 +94,6 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
     matchControlType: '',
     triggerData: '',
   };
-
 
   private state: DialogState;
 
@@ -146,6 +145,104 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
     this.setDialogState({ triggerData: event.target.value });
   };
 
+  // Validation methods
+  private validateTriggerData(triggerData: string, matchControlType: string): string | null {
+    const trimmedTriggerData = triggerData.trim();
+    if (!trimmedTriggerData) {
+      return 'Trigger data 2 is required.';
+    }
+    // Normalize to lowercase for consistency
+    const normalizedTriggerData = trimmedTriggerData.toLowerCase();
+    // Validate hexadecimal format (0x followed by 1 to 8 hex digits for 32-bit system)
+    const hexRegex = /^0x[0-9a-f]{1,8}$/;
+    if (!hexRegex.test(normalizedTriggerData)) {
+      return 'Trigger data 2 must be a valid hexadecimal value with up to 8 digits.';
+    }
+
+    // Conditional validation based on matchControlType
+    if (matchControlType === 'execute') {
+      if (!/^0x80[0-9a-f]{0,6}$/.test(normalizedTriggerData)) {
+        return 'For execute, Trigger data 2 must start with 0x80 followed by up to 6 hexadecimal digits (e.g., 0x80000000).';
+      }
+    } else if (matchControlType === 'store') {
+      if (!/^0x40[0-9a-f]{0,6}$/.test(normalizedTriggerData)) {
+        return 'For store, Trigger data 2 must start with 0x40 followed by up to 6 hexadecimal digits (e.g., 0x40000000).';
+      }
+    } else if (matchControlType === 'load') {
+      if (!/^0x00[0-9a-f]{0,6}$/.test(normalizedTriggerData)) {
+        return 'For load, Trigger data 2 must start with 0x00 followed by up to 6 hexadecimal digits (e.g., 0x00000000).';
+      }
+    } else if (matchControlType) {
+      // If matchControlType is set but not execute, store, or load, allow any valid hex
+      return null;
+    }
+
+    // Update the state with normalized value
+    this.setDialogState({ triggerData: normalizedTriggerData });
+    return null;
+  }
+
+  private validateMatchControlType(matchControlType: string): string | null {
+    if (!matchControlType) {
+      return 'Match control type is required.';
+    }
+    // Align with RISC-V mcontrol types
+    const validMatchControlTypes = ['execute', 'load', 'store'];
+    if (!validMatchControlTypes.includes(matchControlType)) {
+      return "Match control type must be one of: ${validMatchControlTypes.join(', ')}.";
+    }
+    return null;
+  }
+
+  private validateModes(machineMode: boolean, supervisorMode: boolean, userMode: boolean): string | null {
+    if (!machineMode && !supervisorMode && !userMode) {
+      return 'Please select at least one mode (Machine, Supervisor, or User).';
+    }
+    return null;
+  }
+
+  protected override async accept(): Promise<void> {
+    const {
+      triggerData,
+      matchControlType,
+      machineMode,
+      supervisorMode,
+      userMode,
+    } = this.state;
+
+    // Collect all errors
+    const errors: string[] = [];
+
+    // Validate triggerData
+    const triggerDataError = this.validateTriggerData(triggerData, matchControlType);
+    if (triggerDataError) {
+      errors.push(triggerDataError);
+    }
+
+    // Validate matchControlType
+    const matchControlTypeError = this.validateMatchControlType(matchControlType);
+    if (matchControlTypeError) {
+      errors.push(matchControlTypeError);
+    }
+
+    // Validate modes
+    const modesError = this.validateModes(machineMode, supervisorMode, userMode);
+    if (modesError) {
+      errors.push(modesError);
+    }
+
+    // Display all errors if any
+    if (errors.length > 0) {
+      this.messageService.error(errors.join('\n'));
+      return;
+    }
+
+    // If no errors, proceed
+    Object.assign(this.triggerConfig, this.toTriggerConfig());
+    this.messageService.info('Trigger configuration accepted.');
+    super.accept();
+  }
+
   protected render(): React.ReactNode {
     const loaderLine = document.getElementById('loader-line') as HTMLInputElement;
     if (loaderLine) {
@@ -187,6 +284,16 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
       },
     };
 
+    // Dynamically set placeholder based on matchControlType
+    let triggerDataPlaceholder = 'Enter Trigger data 2';
+    if (this.state.matchControlType === 'execute') {
+      triggerDataPlaceholder = 'Enter Trigger data 2 (e.g., 0x80... for execute)';
+    } else if (this.state.matchControlType === 'load') {
+      triggerDataPlaceholder = 'Enter Trigger data 2 (e.g., 0x00... for load)';
+    } else if (this.state.matchControlType === 'store') {
+      triggerDataPlaceholder = 'Enter Trigger data 2 (e.g., 0x40... for store)';
+    }
+
     return (
       <div style={{ padding: 0, paddingLeft: -16, backgroundColor: 'none', color: '#ffffff', width: '100%' }}>
         <FormGrid container spacing={2}>
@@ -201,22 +308,22 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                 >
                   Sizehi
                 </FormLabel>
-              <FormControl fullWidth variant="outlined">
-                <Select
-                  value={this.state.sizehi}
-                  onChange={this.handleSelectChange('sizehi')}
-                  sx={commonSelectStyle}
-                  MenuProps={commonMenuProps}
-                >
-                  <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
-                  <MenuItem value="switch to mode">switch to mode</MenuItem>
-                  <MenuItem value="switch to debug">switch to debug</MenuItem>
-                </Select>
-              </FormControl>
+                <FormControl fullWidth variant="outlined">
+                  <Select
+                    value={this.state.sizehi}
+                    onChange={this.handleSelectChange('sizehi')}
+                    sx={commonSelectStyle}
+                    MenuProps={commonMenuProps}
+                  >
+                    <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
+                    <MenuItem value="switch to mode">switch to mode</MenuItem>
+                    <MenuItem value="switch to debug">switch to debug</MenuItem>
+                  </Select>
+                </FormControl>
               </FormGrid>
             </Grid>
             <Grid item xs={6} sx={{ padding: 0 }}>
-            <FormGrid>
+              <FormGrid>
                 <FormLabel
                   htmlFor="trigger-name"
                   className="title-form"
@@ -224,17 +331,17 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                 >
                   Sizelo
                 </FormLabel>
-              <FormControl fullWidth variant="outlined">
-                <Select
-                  value={this.state.sizelo}
-                  onChange={this.handleSelectChange('sizelo')}
-                  sx={commonSelectStyle}
-                  MenuProps={commonMenuProps}
-                >
-                  <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
-                  <MenuItem value="switch to mode">switch to mode</MenuItem>
-                </Select>
-              </FormControl>
+                <FormControl fullWidth variant="outlined">
+                  <Select
+                    value={this.state.sizelo}
+                    onChange={this.handleSelectChange('sizelo')}
+                    sx={commonSelectStyle}
+                    MenuProps={commonMenuProps}
+                  >
+                    <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
+                    <MenuItem value="switch to mode">switch to mode</MenuItem>
+                  </Select>
+                </FormControl>
               </FormGrid>
             </Grid>
           </Grid>
@@ -242,7 +349,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
           {/* Match and Action */}
           <Grid container spacing={2} sx={{ mt: 0.5, margin: 0, width: '100%' }}>
             <Grid item xs={6} sx={{ padding: 0 }}>
-            <FormGrid>
+              <FormGrid>
                 <FormLabel
                   htmlFor="trigger-name"
                   className="title-form"
@@ -250,21 +357,21 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                 >
                   Match
                 </FormLabel>
-              <FormControl fullWidth variant="outlined">
-                <Select
-                  value={this.state.match}
-                  onChange={this.handleSelectChange('match')}
-                  sx={commonSelectStyle}
-                  MenuProps={commonMenuProps}
-                >
-                  <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
-                  <MenuItem value="switch to debug">switch to debug</MenuItem>
-                </Select>
-              </FormControl>
+                <FormControl fullWidth variant="outlined">
+                  <Select
+                    value={this.state.match}
+                    onChange={this.handleSelectChange('match')}
+                    sx={commonSelectStyle}
+                    MenuProps={commonMenuProps}
+                  >
+                    <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
+                    <MenuItem value="switch to debug">switch to debug</MenuItem>
+                  </Select>
+                </FormControl>
               </FormGrid>
             </Grid>
             <Grid item xs={6} sx={{ padding: 0 }}>
-            <FormGrid>
+              <FormGrid>
                 <FormLabel
                   htmlFor="trigger-name"
                   className="title-form"
@@ -272,175 +379,172 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                 >
                   Action
                 </FormLabel>
-              <FormControl fullWidth variant="outlined">
-                <Select
-                  value={this.state.action}
-                  onChange={this.handleSelectChange('action')}
-                  sx={commonSelectStyle}
-                  MenuProps={commonMenuProps}
-                >
-                  <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
-                  <MenuItem value="switch to debug">switch to debug</MenuItem>
-                </Select>
-              </FormControl>
+                <FormControl fullWidth variant="outlined">
+                  <Select
+                    value={this.state.action}
+                    onChange={this.handleSelectChange('action')}
+                    sx={commonSelectStyle}
+                    MenuProps={commonMenuProps}
+                  >
+                    <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
+                    <MenuItem value="switch to debug">switch to debug</MenuItem>
+                  </Select>
+                </FormControl>
               </FormGrid>
-            </Grid>           
+            </Grid>
           </Grid>
 
-            {/* ✅ Maskmax */}
-            <Grid container spacing={2} sx={{ mt: 0.5, margin: 0, width: '100%' }}>
-              <Grid item xs={6} sx={{ padding: 0 }}>
-                <FormGrid>
-                  <FormLabel
-                    htmlFor="maskmax"
-                    className="title-form"
-                    sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
+          {/* Maskmax */}
+          <Grid container spacing={2} sx={{ mt: 0.5, margin: 0, width: '100%' }}>
+            <Grid item xs={6} sx={{ padding: 0 }}>
+              <FormGrid>
+                <FormLabel
+                  htmlFor="maskmax"
+                  className="title-form"
+                  sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
+                >
+                  Maskmax
+                </FormLabel>
+                <FormControl fullWidth variant="outlined">
+                  <Select
+                    value={this.state.maskmax}
+                    onChange={this.handleSelectChange('maskmax')}
+                    sx={commonSelectStyle}
+                    MenuProps={commonMenuProps}
                   >
-                    Maskmax
-                  </FormLabel>
-                  <FormControl fullWidth variant="outlined">
-                    <Select
-                      value={this.state.maskmax}
-                      onChange={this.handleSelectChange('maskmax')}
-                      sx={commonSelectStyle}
-                      MenuProps={commonMenuProps}
-                    >
-                      <MenuItem value="">Select Maskmax</MenuItem>
-                      <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
-                      <MenuItem value="max2">Max 2</MenuItem>
-                      <MenuItem value="max3">Max 3</MenuItem>
-                    </Select>
-                  </FormControl>
-                </FormGrid>
-              </Grid>
+                    <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
+                    <MenuItem value="max2">Max 2</MenuItem>
+                    <MenuItem value="max3">Max 3</MenuItem>
+                  </Select>
+                </FormControl>
+              </FormGrid>
             </Grid>
-          
+          </Grid>
+
           {/* Checkboxes - Row 1 (4 items) */}
           <Grid container spacing={2} sx={{ mt: 0.5, margin: 0, width: '100%' }}>
-              <Grid item xs={3} sx={{ padding: 0 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={this.state.dmode}
-                      onChange={this.handleCheckboxChange('dmode')}
-                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                    />
-                  }
-                  label={<Typography sx={{ color: '#ffffff' }}>Dmode</Typography>}
-                />
-              </Grid>
-              <Grid item xs={3} sx={{ padding: 0 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={this.state.timing}
-                      onChange={this.handleCheckboxChange('timing')}
-                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                    />
-                  }
-                  label={<Typography sx={{ color: '#ffffff' }}>Timing</Typography>}
-                />
-              </Grid>
-              <Grid item xs={3} sx={{ padding: 0 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={this.state.select}
-                      onChange={this.handleCheckboxChange('select')}
-                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                    />
-                  }
-                  label={<Typography sx={{ color: '#ffffff' }}>Select</Typography>}
-                />
-              </Grid>
-              <Grid item xs={3} sx={{ padding: 0 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={this.state.chain}
-                      onChange={this.handleCheckboxChange('chain')}
-                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                    />
-                  }
-                  label={<Typography sx={{ color: '#ffffff' }}>Chain</Typography>}
-                />
-              </Grid>
+            <Grid item xs={3} sx={{ padding: 0 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={this.state.dmode}
+                    onChange={this.handleCheckboxChange('dmode')}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                  />
+                }
+                label={<Typography sx={{ color: '#ffffff' }}>Dmode</Typography>}
+              />
             </Grid>
-
-            {/* Centered Title between 2 checkbox rows */}
-            <Grid container sx={{ mt: 0.5, margin: 0, width: '100%', paddingLeft: '16px' }}>
-              <Typography sx={{ color: '#ffffff', fontWeight: '500', fontSize: '14px' }} className='title-form'>
-                Choose at least one mode:
-              </Typography>
+            <Grid item xs={3} sx={{ padding: 0 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={this.state.timing}
+                    onChange={this.handleCheckboxChange('timing')}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                  />
+                }
+                label={<Typography sx={{ color: '#ffffff' }}>Timing</Typography>}
+              />
             </Grid>
-
-            {/* Checkboxes - Row 2 (3 items) */}
-            <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
-              <Grid item xs={4} sx={{ padding: 0 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={this.state.machineMode}
-                      onChange={this.handleCheckboxChange('machineMode')}
-                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                    />
-                  }
-                  label={<Typography sx={{ color: '#ffffff' }}>Machine mode</Typography>}
-                />
-              </Grid>
-              <Grid item xs={4} sx={{ padding: 0 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={this.state.supervisorMode}
-                      onChange={this.handleCheckboxChange('supervisorMode')}
-                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                    />
-                  }
-                  label={<Typography sx={{ color: '#ffffff' }}>Supervisor mode</Typography>}
-                />
-              </Grid>
-              <Grid item xs={4} sx={{ padding: 0 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={this.state.userMode}
-                      onChange={this.handleCheckboxChange('userMode')}
-                      sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
-                    />
-                  }
-                  label={<Typography sx={{ color: '#ffffff' }}>User mode</Typography>}
-                />
-              </Grid>
+            <Grid item xs={3} sx={{ padding: 0 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={this.state.select}
+                    onChange={this.handleCheckboxChange('select')}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                  />
+                }
+                label={<Typography sx={{ color: '#ffffff' }}>Select</Typography>}
+              />
             </Grid>
+            <Grid item xs={3} sx={{ padding: 0 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={this.state.chain}
+                    onChange={this.handleCheckboxChange('chain')}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                  />
+                }
+                label={<Typography sx={{ color: '#ffffff' }}>Chain</Typography>}
+              />
+            </Grid>
+          </Grid>
 
+          {/* Centered Title between 2 checkbox rows */}
+          <Grid container sx={{ mt: 1, margin: 0, width: '100%', paddingLeft: '16px' }}>
+            <Typography sx={{ color: '#ffffff', fontWeight: '500', fontSize: '14px' }} className='title-form'>
+              Choose at least one mode <span style={{ color: 'red' }}>*</span>:
+            </Typography>
+          </Grid>
+
+          {/* Checkboxes - Row 2 (3 items) */}
+          <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
+            <Grid item xs={4} sx={{ padding: 0 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={this.state.machineMode}
+                    onChange={this.handleCheckboxChange('machineMode')}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                  />
+                }
+                label={<Typography sx={{ color: '#ffffff' }}>Machine mode</Typography>}
+              />
+            </Grid>
+            <Grid item xs={4} sx={{ padding: 0 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={this.state.supervisorMode}
+                    onChange={this.handleCheckboxChange('supervisorMode')}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                  />
+                }
+                label={<Typography sx={{ color: '#ffffff' }}>Supervisor mode</Typography>}
+              />
+            </Grid>
+            <Grid item xs={4} sx={{ padding: 0 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={this.state.userMode}
+                    onChange={this.handleCheckboxChange('userMode')}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                  />
+                }
+                label={<Typography sx={{ color: '#ffffff' }}>User mode</Typography>}
+              />
+            </Grid>
+          </Grid>
 
           {/* Match Control Type */}
           <Grid item xs={12} sx={{ mt: 1, padding: 0 }}>
-          <FormGrid>
-            <FormLabel
-              htmlFor="trigger-name"
-              className="title-form"
-              required
-              sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
-            >
-              Match control type
-            </FormLabel>
-            <FormControl fullWidth variant="outlined">
-              <Select
-                value={this.state.matchControlType}
-                onChange={this.handleSelectChange('matchControlType')}
-                sx={commonSelectStyle}
-                MenuProps={commonMenuProps}
-                displayEmpty
+            <FormGrid>
+              <FormLabel
+                htmlFor="trigger-name"
+                className="title-form"
+                sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
               >
-                <MenuItem value="">Select type</MenuItem>
-                <MenuItem value="type1">Type 1</MenuItem>
-                <MenuItem value="type2">Type 2</MenuItem>
-                <MenuItem value="type3">Type 3</MenuItem>
-              </Select>
-            </FormControl>
-          </FormGrid>
+                Match control type <span style={{ color: 'red' }}>*</span>
+              </FormLabel>
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  value={this.state.matchControlType}
+                  onChange={this.handleSelectChange('matchControlType')}
+                  sx={commonSelectStyle}
+                  MenuProps={commonMenuProps}
+                  displayEmpty
+                >
+                  <MenuItem value="">Select type</MenuItem>
+                  <MenuItem value="execute">Execute</MenuItem>
+                  <MenuItem value="load">Load</MenuItem>
+                  <MenuItem value="store">Store</MenuItem>
+                </Select>
+              </FormControl>
+            </FormGrid>
           </Grid>
 
           {/* Trigger Data */}
@@ -449,10 +553,9 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
               <FormLabel
                 htmlFor="trigger-name"
                 className="title-form"
-                required
                 sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
               >
-                Trigger data 2
+                Trigger data 2 <span style={{ color: 'red' }}>*</span>
               </FormLabel>
               <TextField
                 fullWidth
@@ -463,7 +566,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                   SecondStepDialog.persistedState.triggerData = e.target.value;
                   Object.assign(this.triggerConfig, this.toTriggerConfig());
                 }}
-                placeholder="Enter Trigger data 2"
+                placeholder={triggerDataPlaceholder}
                 sx={{
                   '& .MuiInputBase-root': {
                     height: 40,
@@ -491,13 +594,6 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
     this.state = { ...SecondStepDialog.persistedState };
     Object.assign(this.triggerConfig, this.toTriggerConfig());
     console.log('TriggerConfig:', this.triggerConfig);
-  }
-
-  protected override async accept(): Promise<void> {
-    this.messageService.info('Accepted');
-    Object.assign(this.triggerConfig, this.toTriggerConfig());
-    console.log('TriggerConfig:', this.triggerConfig);
-    super.accept();
   }
 
   public override close(): void {

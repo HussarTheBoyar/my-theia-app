@@ -45,31 +45,31 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
 
   private toTriggerConfig(): TriggerConfig {
     return {
-      name: 'MatchControlTrigger',
+      name: 'IcountTrigger',
       id: UUID.uuid4(),
       isEnable: true,
-      triggerType: 'mcontrol',
-      mcontrolType: '', // No matchControlType field, set empty
+      triggerType: 'icount',
+      mcontrolType: '',
       tdata1: {
         action: this.state.action,
-        match: '', // No match field, set empty
-        sizehi: '', // No sizehi field, set empty
-        sizelo: '', // No sizelo field, set empty
-        maskmax: '', // No maskmax field, set empty
+        match: '',
+        sizehi: '',
+        sizelo: '',
+        maskmax: '',
         dmode: this.state.dmode,
-        timing: false, // No timing field, set false
-        select: false, // No select field, set false
-        chain: false, // No chain field, set false
+        timing: false,
+        select: false,
+        chain: false,
         m: this.state.machineMode,
         s: this.state.supervisorMode,
         u: this.state.userMode,
       } as MControl,
-      tdata2: undefined, // No triggerData field
+      tdata2: undefined,
     };
   }
 
   private static persistedState: DialogState = {
-    action: 'switch to debug mode',
+    action: '',
     dmode: false,
     machineMode: false,
     supervisorMode: false,
@@ -110,6 +110,44 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
       this.setDialogState({ [key]: event.target.checked }, true);
     }
   };
+
+  // Validation method (for at least one mode)
+  private validateModes(machineMode: boolean, supervisorMode: boolean, userMode: boolean): string | null {
+    const selectedModes = [machineMode, supervisorMode, userMode].filter(Boolean).length;
+    if (selectedModes < 1) {
+      return 'Please select at least one mode (Machine, Supervisor, or User).';
+    }
+    return null;
+  }
+
+  protected override async accept(): Promise<void> {
+    const {
+      machineMode,
+      supervisorMode,
+      userMode,
+    } = this.state;
+
+    // Collect all errors
+    const errors: string[] = [];
+
+    // Validate modes (at least one mode)
+    const modesError = this.validateModes(machineMode, supervisorMode, userMode);
+    if (modesError) {
+      errors.push(modesError);
+    }
+
+    // Display all errors if any
+    if (errors.length > 0) {
+      this.messageService.error(errors.join('\n'));
+      return;
+    }
+
+    // If no errors, proceed
+    Object.assign(this.triggerConfig, this.toTriggerConfig());
+    this.messageService.info('Trigger configuration accepted.');
+    console.log('TriggerConfig:', this.triggerConfig);
+    super.accept();
+  }
 
   protected render(): React.ReactNode {
     const loaderLine = document.getElementById('loader-line') as HTMLInputElement;
@@ -155,7 +193,7 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
     return (
       <div style={{ padding: 0, paddingLeft: -16, backgroundColor: 'none', color: '#ffffff', width: '100%' }}>
         <FormGrid container spacing={2}>
-          {/* Action */}
+          {/* Action (no validation) */}
           <Grid item xs={12} sx={{ padding: 0 }}>
             <FormGrid>
               <FormLabel
@@ -171,15 +209,17 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
                   onChange={this.handleSelectChange('action')}
                   sx={commonSelectStyle}
                   MenuProps={commonMenuProps}
+                  displayEmpty
                 >
-                  <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
-                  <MenuItem value="switch to debug">switch to debug</MenuItem>
+                  <MenuItem value="">Select Action</MenuItem>
+                  <MenuItem value="0">Do Nothing</MenuItem>
+                  <MenuItem value="1">Breakpoint Exception</MenuItem>
                 </Select>
               </FormControl>
             </FormGrid>
           </Grid>
 
-          {/* Dmode Checkbox */}
+          {/* Dmode Checkbox (no validation) */}
           <Grid container spacing={2} sx={{ mt: 0.5, margin: 0, width: '100%' }}>
             <Grid item xs={3} sx={{ padding: 0 }}>
               <FormControlLabel
@@ -198,7 +238,7 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
           {/* Centered Title for Mode Checkboxes */}
           <Grid container sx={{ mt: 0.5, margin: 0, width: '100%', paddingLeft: '16px' }}>
             <Typography sx={{ color: '#ffffff', fontWeight: '500', fontSize: '14px' }} className='title-form'>
-              Choose at least one mode:
+              Select at least one mode:
             </Typography>
           </Grid>
 
@@ -253,17 +293,10 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
 
   @postConstruct()
   protected init(): void {
-    this.title.label = 'Add Match Control Trigger';
+    this.title.label = 'Add Icount Trigger';
     this.state = { ...SecondStepIcount.persistedState };
     Object.assign(this.triggerConfig, this.toTriggerConfig());
     console.log('TriggerConfig:', this.triggerConfig);
-  }
-
-  protected override async accept(): Promise<void> {
-    this.messageService.info('Accepted');
-    Object.assign(this.triggerConfig, this.toTriggerConfig());
-    console.log('TriggerConfig:', this.triggerConfig);
-    super.accept();
   }
 
   public override close(): void {

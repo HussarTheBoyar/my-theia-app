@@ -14,6 +14,8 @@
     padding: 0;
     margin: 0;
     cursor: pointer;
+    color: #FFFFFF;
+    margin-left: 5px;
 }
 
 .theia-TreeNode:hover .xplor-trigger-button {
@@ -64,6 +66,7 @@
     font-size: 14px;
     font-weight: 600;
     border-radius: 4px;
+    cursor: pointer;
 }
 
 .menu-item {
@@ -91,4 +94,9 @@
 
 .css-12ews02-MuiInputBase-root-MuiOutlinedInput-root-MuiSelect-root{
     height: 40px;
+}
+
+.css-4y4r97-MuiTypography-root {
+    margin-top: 15px !important;
+    margin-bottom: 0px !important;
 }

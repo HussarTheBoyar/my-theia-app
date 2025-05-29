@@ -271,21 +271,7 @@ export class HoangWidget extends TreeWidget {
         );
     }
 
-    protected renderUpdateButton(node: TreeNode, props: NodeProps): React.ReactNode {
-        const icon = codicon('settings-gear');
-        const classNames = [TREE_NODE_SEGMENT_CLASS, 'xplor-trigger-button', icon];
-
-        return (
-            <button
-                type="button"
-                className={classNames.join(' ')}
-                title={`Update ${(node as TriggerNode).name}`}
-                tabIndex={0}
-                onClick={async e => await this.onUpdateButtonClick(e, node as TriggerNode)}
-                aria-label={`Update ${(node as TriggerNode).name}`}
-            />
-        );
-    }
+    
 
     protected renderInfoButton(node: TreeNode, props: NodeProps): React.ReactNode {
         const icon = codicon('info');
@@ -300,15 +286,51 @@ export class HoangWidget extends TreeWidget {
             { label: 'Enabled', value: triggerData.isEnable ? 'Yes' : 'No' },
         ];
     
+        if (triggerData.triggerType === 'mcontrol') {
+            infoItems.push({ label: 'Match Control Type', value: triggerData.mcontrolType || 'N/A' });
+        }
+    
+        const tdata1Items = triggerData.triggerType === 'mcontrol' ? [
+            { label: '- Action', value: triggerData.tdata1?.action || 'N/A' },
+            { label: '- Match', value: triggerData.tdata1?.match || 'N/A' },
+            { label: '- Sizehi', value: triggerData.tdata1?.sizehi || 'N/A' },
+            { label: '- Sizelo', value: triggerData.tdata1?.sizelo || 'N/A' },
+            { label: '- Maskmax', value: triggerData.tdata1?.maskmax || 'N/A' },
+            { label: '- Dmode', value: triggerData.tdata1?.dmode ? 'Yes' : 'No' },
+            { label: '- Timing', value: triggerData.tdata1?.timing ? 'Yes' : 'No' },
+            { label: '- Select', value: triggerData.tdata1?.select ? 'Yes' : 'No' },
+            { label: '- Chain', value: triggerData.tdata1?.chain ? 'Yes' : 'No' },
+            { label: '- Machine mode', value: triggerData.tdata1?.m ? 'Yes' : 'No' },
+            { label: '- Supervisor mode', value: triggerData.tdata1?.s ? 'Yes' : 'No' },
+            { label: '- User mode', value: triggerData.tdata1?.u ? 'Yes' : 'No' },
+        ] : [
+            { label: '- Action', value: triggerData.tdata1?.action || 'N/A' },
+            { label: '- Dmode', value: triggerData.tdata1?.dmode ? 'Yes' : 'No' },
+            { label: '- Machine mode', value: triggerData.tdata1?.m ? 'Yes' : 'No' },
+            { label: '- Supervisor mode', value: triggerData.tdata1?.s ? 'Yes' : 'No' },
+            { label: '- User mode', value: triggerData.tdata1?.u ? 'Yes' : 'No' },
+        ];
+    
         return (
             <Tooltip
                 title={
-                    <div style={{ fontSize: 12, maxWidth: 300 }}>
+                    <div style={{ fontSize: 12, padding: '8px', maxWidth: 400, color: '#ffffff' }}>
                         {infoItems.map(item => (
-                            <div key={item.label} style={{ marginBottom: 4 }}>
+                            <div key={item.label} style={{ marginBottom: 2 }}>
                                 <strong>{item.label}:</strong> {item.value ?? 'N/A'}
                             </div>
                         ))}
+                        <div style={{ margin: '4px 0', fontWeight: 'bold' }}>
+                            Trigger Data 1
+                        </div>
+                        {tdata1Items.map(item => (
+                            <div key={item.label} style={{ marginBottom: 2 }}>
+                                <strong>{item.label}:</strong> {item.value}
+                            </div>
+                        ))}
+                        <div style={{ marginTop: 4 }}>
+                            <strong>Trigger Data 2:</strong> {triggerData.tdata2 ?? 'N/A'}
+                        </div>
                     </div>
                 }
                 placement="top"
@@ -326,6 +348,22 @@ export class HoangWidget extends TreeWidget {
                     }}
                 />
             </Tooltip>
+        );
+    }
+
+    protected renderUpdateButton(node: TreeNode, props: NodeProps): React.ReactNode {
+        const icon = codicon('edit');
+        const classNames = [TREE_NODE_SEGMENT_CLASS, 'xplor-trigger-button', icon];
+
+        return (
+            <button
+                type="button"
+                className={classNames.join(' ')}
+                title={`Update ${(node as TriggerNode).name}`}
+                tabIndex={0}
+                onClick={async e => await this.onUpdateButtonClick(e, node as TriggerNode)}
+                aria-label={`Update ${(node as TriggerNode).name}`}
+            />
         );
     }
 

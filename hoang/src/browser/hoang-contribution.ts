@@ -101,7 +101,7 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
         toolbar.registerItem({
             id: TriggerCommand.IMPORT.id,
             command: TriggerCommand.IMPORT.id,
-            icon: codicon('settings'),
+            icon: codicon('add'),
             priority: 2,
             tooltip: TriggerCommand.IMPORT.label,
         });

@@ -121,7 +121,7 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
     return (
       <div
         className="xplor-ide-dialog xplor-ide-grid-container"
-        style={{ minWidth: '500px', padding: '28px', backgroundColor: 'none', color: '#ffffff' }}
+        style={{ paddingLeft: '20px', backgroundColor: 'none', color: '#ffffff' }}
         id="xplor-ide-create-project-dialog"
       >
         <Grid container spacing={3} flexDirection={'column'}>
@@ -130,10 +130,9 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
               <FormLabel
                 htmlFor="trigger-name"
                 className="title-form"
-                required
                 sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
               >
-                Trigger name
+                Trigger name <span style={{ color: 'red' }}>*</span>
               </FormLabel>
               <TextField
                 id="trigger-name"
@@ -173,10 +172,9 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
               <FormLabel
                 htmlFor="trigger-type"
                 className="title-form"
-                required
                 sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
               >
-                Trigger Type
+                Trigger Type <span style={{ color: 'red' }}>*</span>
               </FormLabel>
               <FormControl fullWidth variant="outlined">
                 <Select

@@ -22,7 +22,7 @@ export interface MControl {
   select: boolean;
   timing: boolean;
   sizelo: string;
-  sizehi?: string; // Added sizehi property
+  sizehi?: string; 
   action: string;
   match: string;
   chain: boolean;

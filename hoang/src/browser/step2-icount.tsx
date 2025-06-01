@@ -13,7 +13,7 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Typography from '@mui/material/Typography';
 import FormLabel from '@mui/material/FormLabel';
-import { MControl, TriggerConfig } from './common/trigger-interface';
+import { ICount, TriggerConfig } from './common/trigger-interface';
 import { UUID } from '@theia/core/shared/@lumino/coreutils';
 
 @injectable()
@@ -21,55 +21,58 @@ export class SecondStepIcountProps extends DialogProps {}
 
 interface DialogState {
   action: string;
+  count: string; // Kept as string for Select compatibility
   dmode: boolean;
   machineMode: boolean;
   supervisorMode: boolean;
   userMode: boolean;
 }
 
+const FormGrid = styled(Grid)(() => ({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  margin: 0,
+  padding: 0,
+}));
+
+const commonSelectStyle = {
+  '& .MuiInputBase-root': {
+    height: 40,
+  },
+  backgroundColor: '#41414C',
+  color: '#ffffff',
+  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
+  '& .MuiSelect-icon': { color: '#ffffff' },
+};
+
+const commonMenuProps = {
+  PaperProps: {
+    sx: {
+      backgroundColor: '#2c2c34',
+      color: '#ffffff',
+      '& .MuiMenuItem-root': {
+        '&.Mui-selected': {
+          backgroundColor: '#3a3a45',
+        },
+        '&:hover': {
+          backgroundColor: '#50505f',
+        },
+      },
+    },
+  },
+};
+
 @injectable()
 export class SecondStepIcount extends ReactDialog<TriggerConfig> {
   @inject(MessageService)
   protected readonly messageService: MessageService;
 
-  private setDialogState(partialState: Partial<DialogState>, shouldUpdate = false) {
-    this.state = { ...this.state, ...partialState };
-    SecondStepIcount.persistedState = { ...this.state };
-    Object.assign(this.triggerConfig, this.toTriggerConfig());
-    if (shouldUpdate) {
-      this.update();
-    }
-  }
-
-  public triggerConfig: Partial<TriggerConfig> = {};
-
-  private toTriggerConfig(): TriggerConfig {
-    return {
-      name: 'IcountTrigger',
-      id: UUID.uuid4(),
-      isEnable: true,
-      triggerType: 'icount',
-      mcontrolType: '',
-      tdata1: {
-        action: this.state.action,
-        match: '',
-        sizehi: '',
-        sizelo: '',
-        maskmax: '',
-        dmode: this.state.dmode,
-        timing: false,
-        select: false,
-        chain: false,
-        m: this.state.machineMode,
-        s: this.state.supervisorMode,
-        u: this.state.userMode,
-      } as MControl,
-      tdata2: undefined,
-    };
-  }
+  private readonly triggerConfig: Partial<TriggerConfig> = {};
 
   private static persistedState: DialogState = {
     action: '',
+    count: '',
     dmode: false,
     machineMode: false,
     supervisorMode: false,
@@ -83,8 +86,8 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
   ) {
     super(props);
     this.state = { ...SecondStepIcount.persistedState };
-    this.appendAcceptButton('Create Trigger');
     this.appendCloseButton('Back');
+    this.appendAcceptButton('Create Trigger');
 
     this.handleSelectChange = this.handleSelectChange.bind(this);
     this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
@@ -94,10 +97,36 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
     return this.toTriggerConfig();
   }
 
-  private readonly handleSelectChange: (key: keyof DialogState) => (event: SelectChangeEvent) => void = (key) => (event) => {
-    if (key === 'action') {
-      this.setDialogState({ [key]: event.target.value }, true);
+  private setDialogState(partialState: Partial<DialogState>, shouldUpdate = false) {
+    this.state = { ...this.state, ...partialState };
+    SecondStepIcount.persistedState = { ...this.state };
+    Object.assign(this.triggerConfig, this.toTriggerConfig());
+    if (shouldUpdate) {
+      this.update();
     }
+  }
+
+  private toTriggerConfig(): TriggerConfig {
+    return {
+      name: 'IcountTrigger',
+      id: UUID.uuid4(),
+      isEnable: true,
+      triggerType: 'icount',
+      tdata1: {
+        type: 3,
+        action: this.state.action,
+        count: this.state.count ? parseInt(this.state.count, 10) : 0,
+        dmode: this.state.dmode,
+        m: this.state.machineMode,
+        s: this.state.supervisorMode,
+        u: this.state.userMode,
+      } as ICount,
+      tdata2: undefined,
+    };
+  }
+
+  private readonly handleSelectChange: (key: keyof DialogState) => (event: SelectChangeEvent) => void = (key) => (event) => {
+    this.setDialogState({ [key]: event.target.value }, true);
   };
 
   private readonly handleCheckboxChange: (key: keyof DialogState) => (event: React.ChangeEvent<HTMLInputElement>) => void = (key) => (event) => {
@@ -111,7 +140,6 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
     }
   };
 
-  // Validation method (for at least one mode)
   private validateModes(machineMode: boolean, supervisorMode: boolean, userMode: boolean): string | null {
     const selectedModes = [machineMode, supervisorMode, userMode].filter(Boolean).length;
     if (selectedModes < 1) {
@@ -121,28 +149,30 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
   }
 
   protected override async accept(): Promise<void> {
-    const {
-      machineMode,
-      supervisorMode,
-      userMode,
-    } = this.state;
-
-    // Collect all errors
+    const { machineMode, supervisorMode, userMode, count, action } = this.state;
     const errors: string[] = [];
 
-    // Validate modes (at least one mode)
+    // Validate modes
     const modesError = this.validateModes(machineMode, supervisorMode, userMode);
     if (modesError) {
       errors.push(modesError);
     }
 
-    // Display all errors if any
+    // Validate count
+    if (!count) {
+      errors.push('Please select a count value.');
+    }
+
+    // Validate action
+    if (!action || (action !== '0' && action !== '1')) {
+      errors.push('Please select a valid action.');
+    }
+
     if (errors.length > 0) {
       this.messageService.error(errors.join('\n'));
       return;
     }
 
-    // If no errors, proceed
     Object.assign(this.triggerConfig, this.toTriggerConfig());
     this.messageService.info('Trigger configuration accepted.');
     console.log('TriggerConfig:', this.triggerConfig);
@@ -150,50 +180,15 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
   }
 
   protected render(): React.ReactNode {
-    const loaderLine = document.getElementById('loader-line') as HTMLInputElement;
-    if (loaderLine) {
-      loaderLine.classList.remove('xplor-ide-loader-line');
-    }
-
-    const FormGrid = styled(Grid)(() => ({
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      margin: 0,
-      padding: 0,
-    }));
-
-    const commonSelectStyle = {
-      '& .MuiInputBase-root': {
-        height: 40,
-      },
-      backgroundColor: '#41414C',
-      color: '#ffffff',
-      '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
-      '& .MuiSelect-icon': { color: '#ffffff' },
-    };
-
-    const commonMenuProps = {
-      PaperProps: {
-        sx: {
-          backgroundColor: '#2c2c34',
-          color: '#ffffff',
-          '& .MuiMenuItem-root': {
-            '&.Mui-selected': {
-              backgroundColor: '#3a3a45',
-            },
-            '&:hover': {
-              backgroundColor: '#50505f',
-            },
-          },
-        },
-      },
-    };
+      const loaderLine = document.getElementById('loader-line') as HTMLInputElement;
+      if (loaderLine) {
+        loaderLine.classList.remove('xplor-ide-loader-line');
+      }
 
     return (
-      <div style={{ padding: 0, paddingLeft: -16, backgroundColor: 'none', color: '#ffffff', width: '100%' }}>
+      <div style={{ padding: 0, paddingLeft: '-16px', backgroundColor: 'transparent', color: '#ffffff', width: '100%' }}>
         <FormGrid container spacing={2}>
-          {/* Action (no validation) */}
+          {/* Action */}
           <Grid item xs={12} sx={{ padding: 0 }}>
             <FormGrid>
               <FormLabel
@@ -219,7 +214,37 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
             </FormGrid>
           </Grid>
 
-          {/* Dmode Checkbox (no validation) */}
+          {/* Count Dropdown */}
+          <Grid item xs={12} sx={{ padding: 0 }}>
+            <FormGrid>
+              <FormLabel
+                htmlFor="count"
+                className="title-form"
+                sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
+              >
+                Count
+              </FormLabel>
+              <FormControl fullWidth variant="outlined">
+                <Select
+                  id="count"
+                  value={this.state.count}
+                  onChange={this.handleSelectChange('count')}
+                  sx={commonSelectStyle}
+                  MenuProps={commonMenuProps}
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Count</MenuItem>
+                  {[...Array(10).keys()].map(i => (
+                    <MenuItem key={i + 1} value={(i + 1).toString()}>
+                      {i + 1}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </FormGrid>
+          </Grid>
+
+          {/* Dmode Checkbox */}
           <Grid container spacing={2} sx={{ mt: 0.5, margin: 0, width: '100%' }}>
             <Grid item xs={3} sx={{ padding: 0 }}>
               <FormControlLabel
@@ -237,7 +262,7 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
 
           {/* Centered Title for Mode Checkboxes */}
           <Grid container sx={{ mt: 0.5, margin: 0, width: '100%', paddingLeft: '16px' }}>
-            <Typography sx={{ color: '#ffffff', fontWeight: '500', fontSize: '14px' }} className='title-form'>
+            <Typography sx={{ color: '#ffffff', fontWeight: '500', fontSize: '14px' }} className="title-form">
               Select at least one mode:
             </Typography>
           </Grid>
@@ -288,6 +313,10 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
 
   protected override onAfterAttach(msg: Message): void {
     super.onAfterAttach(msg);
+    const buttonBar = document.querySelector('.theia-dialog-button-bar');
+    if (buttonBar) {
+      buttonBar.setAttribute('style', 'display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 8px;');
+    }
     this.update();
   }
 
@@ -297,6 +326,61 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
     this.state = { ...SecondStepIcount.persistedState };
     Object.assign(this.triggerConfig, this.toTriggerConfig());
     console.log('TriggerConfig:', this.triggerConfig);
+  }
+
+  public async openWithData(trigger: TriggerConfig, isEdit = false): Promise<TriggerConfig | undefined> {
+    // Validate trigger type
+    if (trigger.triggerType !== 'icount') {
+      this.messageService.error('Invalid trigger type. Expected "icount".');
+      return undefined;
+    }
+
+    const defaultState: DialogState = {
+      action: '',
+      count: '',
+      dmode: false,
+      machineMode: false,
+      supervisorMode: false,
+      userMode: false,
+    };
+
+    // Check for missing tdata1
+    if (!trigger.tdata1) {
+      this.messageService.error('Trigger configuration is missing tdata1.');
+      this.state = defaultState;
+      return undefined;
+    }
+
+    // Narrow tdata1 to ICount
+    if (trigger.tdata1.type === 3) {
+      // tdata1 is ICount
+      this.state = {
+        action: (trigger.tdata1.action === '0' || trigger.tdata1.action === '1') ? trigger.tdata1.action : '',
+        dmode: trigger.tdata1.dmode || false,
+        machineMode: trigger.tdata1.m || false,
+        supervisorMode: trigger.tdata1.s || false,
+        userMode: trigger.tdata1.u || false,
+        count: trigger.tdata1.count ? trigger.tdata1.count.toString() : '',
+      };
+    } else {
+      // tdata1 is not ICount, use default state and show warning
+      this.messageService.warn('Invalid tdata1 type. Expected ICount (type 3). Using default state.');
+      this.state = defaultState;
+    }
+
+    SecondStepIcount.persistedState = { ...this.state };
+    this.title.label = isEdit ? 'Edit Icount Trigger' : 'Add Icount Trigger';
+    this.clearAcceptButton();
+    this.appendAcceptButton(isEdit ? 'Edit Trigger' : 'Create Trigger');
+    this.update();
+
+    return super.open();
+  }
+
+  private clearAcceptButton(): void {
+    const buttons = this['acceptButton'] ? [this['acceptButton']] : [];
+    buttons.forEach(button => button.remove());
+    this['acceptButton'] = undefined;
   }
 
   public override close(): void {

@@ -37,6 +37,7 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
             toggleCommandId: HoangCommand.id
         });
     }
+    
 
     /**
      * Example command registration to open the widget from the menu, and quick-open.
@@ -78,6 +79,7 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
             isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
         });
     }
+    
 
     /**
      * Example menu registration to contribute a menu item used to open the widget.
@@ -136,5 +138,6 @@ export function createRISCVDebugTriggerTreeContainer(parent: interfaces.Containe
 export function createRISCVTriggerWidget(parent: interfaces.Container): HoangWidget {
     return createRISCVDebugTriggerTreeContainer(parent).get(HoangWidget);
 }
+
 
 

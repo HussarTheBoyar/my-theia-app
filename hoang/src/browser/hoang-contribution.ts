@@ -15,6 +15,7 @@ import {
     TabBarToolbarContribution,
     TabBarToolbarRegistry
 } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
+import { MessageService } from '@theia/core';
 
 export const HoangCommand: Command = { id: 'hoang:command' };
 
@@ -31,8 +32,6 @@ export namespace TriggerCommand {
         id: 'trigger:disable-all',
         label: 'Disable/Enable All Triggers'
     };
-
-    // Reasonable implementation: just return the EDIT_TRIGGER command object
     export const EDIT_TRIGGER: Command = {
         id: 'trigger:edit',
         label: 'Edit Trigger'
@@ -47,19 +46,17 @@ export namespace TriggerCommand {
     };
     export const ACTIVE_ALL_TRIGGERS: Command = {
         id: 'trigger:active-all',
-        label: 'Activate All Triggers'
+        label: 'Enable All Triggers'
     };
     export const INACTIVE_ALL_TRIGGERS: Command = {
         id: 'trigger:inactive-all',
-        label: 'Deactivate All Triggers'
+        label: 'Disable All Triggers'
     };
 
-    // This function is not used in the code, but if needed, it could return the EDIT_TRIGGER command
     export function EDIT_TRIGGER_FN(): Command {
         return EDIT_TRIGGER;
     }
 }
-
 
 @injectable()
 export class HoangContribution extends AbstractViewContribution<HoangWidget> implements TabBarToolbarContribution {
@@ -67,7 +64,9 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
     @inject(FirstStepDialog)
     protected readonly firstDialog: FirstStepDialog;
 
-    // New state to track enable/disable toggle
+    @inject(MessageService)
+    protected readonly messageService: MessageService;
+
     protected allDisabled = false;
 
     constructor() {
@@ -93,6 +92,7 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
                         widget.triggers.push(valueTrigger);
                         await widget.refreshView();
                         this.firstDialog.close();
+                        this.messageService.info(`Trigger "${valueTrigger.name}" imported.`);
                     }
                 }
             },
@@ -106,6 +106,7 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
                 if (widget instanceof HoangWidget) {
                     widget.triggers = [];
                     await widget.refreshView();
+                    this.messageService.info('All triggers deleted.');
                 }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
@@ -116,9 +117,10 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
             execute: async () => {
                 const widget = await this.openView({ activate: true });
                 if (widget instanceof HoangWidget) {
-                    this.allDisabled = !this.allDisabled; // Toggle the state
+                    this.allDisabled = !this.allDisabled;
                     widget.triggers.forEach(trigger => trigger.isEnable = !this.allDisabled);
                     await widget.refreshView();
+                    this.messageService.info(`All triggers ${this.allDisabled ? 'disabled' : 'enabled'}.`);
                 }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
@@ -126,16 +128,52 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
         });
 
         commands.registerCommand(TriggerCommand.EDIT_TRIGGER, {
-            execute: async (trigger: any) => {
-                console.log('Editing trigger:', trigger);
+            execute: async () => {
+                const widget = await this.openView({ activate: true });
+                if (widget instanceof HoangWidget) {
+                    const selectedNode = widget.model.selectedNodes[0];
+                    if (selectedNode && 'triggerData' in selectedNode) {
+                        const triggerNode = selectedNode as any; // TriggerNode
+                        const index = widget.triggers.findIndex(t => t.id === triggerNode.triggerData.id);
+                        if (index === -1) {
+                            this.messageService.warn(`Trigger "${triggerNode.name}" not found.`);
+                            return;
+                        }
+                        const updatedTrigger = await this.firstDialog.openWithData(triggerNode.triggerData);
+                        if (updatedTrigger) {
+                            widget.triggers[index] = { ...widget.triggers[index], ...updatedTrigger };
+                            await widget.refreshView();
+                            this.messageService.info(`Trigger "${updatedTrigger.name}" updated.`);
+                        }
+                    } else {
+                        this.messageService.warn('No trigger selected for editing.');
+                    }
+                }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
             isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
         });
 
         commands.registerCommand(TriggerCommand.REMOVE_TRIGGER, {
-            execute: async (trigger: any) => {
-                console.log('Removing trigger:', trigger);
+            execute: async () => {
+                const widget = await this.openView({ activate: true });
+                if (widget instanceof HoangWidget) {
+                    const selectedNode = widget.model.selectedNodes[0];
+                    if (selectedNode && 'triggerData' in selectedNode) {
+                        const triggerNode = selectedNode as any; // TriggerNode
+                        const index = widget.triggers.findIndex(t => t.id === triggerNode.triggerData.id);
+                        if (index !== -1) {
+                            const triggerName = widget.triggers[index].name;
+                            widget.triggers.splice(index, 1);
+                            await widget.refreshView();
+                            this.messageService.info(`Trigger "${triggerName}" removed.`);
+                        } else {
+                            this.messageService.warn(`Trigger "${triggerNode.name}" not found.`);
+                        }
+                    } else {
+                        this.messageService.warn('No trigger selected for removal.');
+                    }
+                }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
             isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
@@ -143,7 +181,12 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
 
         commands.registerCommand(TriggerCommand.REMOVE_ALL_TRIGGERS, {
             execute: async () => {
-                console.log('Removing all triggers');
+                const widget = await this.openView({ activate: true });
+                if (widget instanceof HoangWidget) {
+                    widget.triggers = [];
+                    await widget.refreshView();
+                    this.messageService.info('All triggers removed.');
+                }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
             isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
@@ -151,7 +194,12 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
 
         commands.registerCommand(TriggerCommand.ACTIVE_ALL_TRIGGERS, {
             execute: async () => {
-                console.log('Activating all triggers');
+                const widget = await this.openView({ activate: true });
+                if (widget instanceof HoangWidget) {
+                    widget.triggers.forEach(trigger => trigger.isEnable = true);
+                    await widget.refreshView();
+                    this.messageService.info('All triggers activated.');
+                }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
             isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
@@ -159,7 +207,12 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
 
         commands.registerCommand(TriggerCommand.INACTIVE_ALL_TRIGGERS, {
             execute: async () => {
-                console.log('Deactivating all triggers');
+                const widget = await this.openView({ activate: true });
+                if (widget instanceof HoangWidget) {
+                    widget.triggers.forEach(trigger => trigger.isEnable = false);
+                    await widget.refreshView();
+                    this.messageService.info('All triggers deactivated.');
+                }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
             isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
@@ -183,7 +236,6 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
             }
         };
 
-        // Register your context menu actions
         registerMenuActions(HoangWidget.CONTEXT_MENU,
             TriggerCommand.EDIT_TRIGGER,
             TriggerCommand.REMOVE_TRIGGER,
@@ -198,21 +250,21 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
             id: TriggerCommand.IMPORT.id,
             command: TriggerCommand.IMPORT.id,
             icon: codicon('add'),
-            priority: 0, // LEFTMOST
+            priority: 0,
             tooltip: TriggerCommand.IMPORT.label,
         });
         toolbar.registerItem({
             id: TriggerCommand.DISABLE_ALL.id,
             command: TriggerCommand.DISABLE_ALL.id,
             icon: codicon('activate-breakpoints'),
-            priority: 1, // MIDDLE
+            priority: 1,
             tooltip: TriggerCommand.DISABLE_ALL.label,
         });
         toolbar.registerItem({
             id: TriggerCommand.DELETE_ALL.id,
             command: TriggerCommand.DELETE_ALL.id,
             icon: codicon('close-all'),
-            priority: 2, // RIGHTMOST
+            priority: 2,
             tooltip: TriggerCommand.DELETE_ALL.label,
         });
     }

@@ -194,8 +194,8 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
   ) {
     super(props);
     this.state = { ...FirstStepDialog.persistedState };
-    this.appendAcceptButton('Create');
     this.appendCloseButton('Cancel');
+    this.appendAcceptButton('Create');
 
     this.handleChange = this.handleChange.bind(this);
     this.handleTriggerNameChange = this.handleTriggerNameChange.bind(this);

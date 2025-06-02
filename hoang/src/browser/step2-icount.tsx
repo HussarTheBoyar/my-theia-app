@@ -221,9 +221,9 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
                     MenuProps={commonMenuProps}
                     displayEmpty
                   >
-                    <MenuItem value="1">switch to debug mode</MenuItem>
-                    <MenuItem value="2">switch to mode</MenuItem>
-                    <MenuItem value="3">switch to debug</MenuItem>
+                    <MenuItem value="1">1</MenuItem>
+                    <MenuItem value="2">2</MenuItem>
+                    <MenuItem value="3">3</MenuItem>
                   </Select>
                 </FormControl>
               </FormGrid>
@@ -335,8 +335,6 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
         userMode: trigger.tdata1.u || defaultState.userMode,
       };
     } else {
-      // Invalid trigger type or tdata1 type, use default state and show warning
-      this.messageService.warn('Invalid trigger type or tdata1. Expected icount trigger with type 3. Using default state.');
       this.state = defaultState;
     }
 

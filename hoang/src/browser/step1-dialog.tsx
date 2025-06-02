@@ -10,6 +10,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import FormLabel from '@mui/material/FormLabel';
+import TextField from '@mui/material/TextField';
 import { TriggerConfig } from './common/trigger-interface';
 import { SecondStepDialog } from './step2-dialog';
 import { SecondStepIcount } from './step2-icount';
@@ -103,7 +104,7 @@ const DialogContent: React.FC<DialogContentProps> = ({ state, onTriggerNameChang
     >
       <Grid container spacing={3} flexDirection={'column'}>
         <Grid item xs={12} sx={{ mt: 1, padding: 0 }}>
-          <FormControl fullWidth>
+          <FormGrid>
             <FormLabel
               htmlFor="trigger-name"
               className="title-form"
@@ -111,28 +112,29 @@ const DialogContent: React.FC<DialogContentProps> = ({ state, onTriggerNameChang
             >
               Trigger name <span style={{ color: 'red' }}>*</span>
             </FormLabel>
-            <input
-              ref={triggerNameInputRef}
-              id="trigger-name"
-              value={state.triggerName}
-              onChange={(e) => onTriggerNameChange(e.target.value)}
-              onBlur={() => console.log('Trigger name lost focus')}
-              placeholder="Enter trigger name"
-              required
-              style={{
-                width: '100%',
-                height: '40px',
-                backgroundColor: '#41414C',
-                color: '#ffffff',
-                border: '1px solid rgba(255, 255, 255, 0.23)',
-                borderRadius: '4px',
-                padding: '8px',
-                fontSize: '14px',
-                outline: 'none',
-              }}
-              onFocus={() => console.log('Trigger name gained focus')}
-            />
-          </FormControl>
+            <FormControl fullWidth>
+              <TextField
+                inputRef={triggerNameInputRef}
+                id="trigger-name"
+                value={state.triggerName}
+                onChange={(e) => onTriggerNameChange(e.target.value)}
+                onBlur={() => console.log('Trigger name lost focus')}
+                placeholder="Enter trigger name"
+                required
+                fullWidth
+                variant="outlined"
+                sx={{
+                  '& .MuiInputBase-root': {
+                    height: 40,
+                    backgroundColor: '#41414C',
+                    color: '#ffffff',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'none' },
+                }}
+                onFocus={() => console.log('Trigger name gained focus')}
+              />
+            </FormControl>
+          </FormGrid>
         </Grid>
 
         <Grid item xs={12} sx={{ mt: 1, padding: 0 }}>
@@ -250,7 +252,7 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
 
   @postConstruct()
   protected init(): void {
-    this.title.label = 'Create a new project';
+    this.title.label = 'Create Trigger'; // Default title for new triggers
     this.state = { ...FirstStepDialog.persistedState };
     this.update();
   }
@@ -283,15 +285,18 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
 
     if (this.state.triggerType === 'mcontrol') {
       config = await this.secondStepDialog.open();
-    } else if (['icount', 'itrigger', 'etrigger'].includes(this.state.triggerType)) {
+    } else if (this.state.triggerType === 'icount') {
       config = await this.secondStepIcount.openWithData(this.value, this.title.label === 'Edit Trigger');
+    } else {
+      this.messageService.error(`Trigger type "${this.state.triggerType}" is not supported yet.`);
+      return;
     }
 
     if (config) {
       this.finalConfig = {
         ...config,
         name: this.state.triggerName,
-        triggerType: this.state.triggerType as 'mcontrol' | 'icount' | 'etrigger',
+        triggerType: this.state.triggerType as 'mcontrol' | 'icount' | 'itrigger' | 'etrigger',
       };
       console.log('Final Trigger Config:', this.finalConfig);
       super.accept();

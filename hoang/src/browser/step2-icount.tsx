@@ -71,8 +71,8 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
   private readonly triggerConfig: Partial<TriggerConfig> = {};
 
   private static persistedState: DialogState = {
-    action: '',
-    count: '',
+    action: 'switch to debug mode',
+    count: '1',
     dmode: false,
     machineMode: false,
     supervisorMode: false,
@@ -170,68 +170,64 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
   }
 
   protected render(): React.ReactNode {
-      const loaderLine = document.getElementById('loader-line') as HTMLInputElement;
-      if (loaderLine) {
-        loaderLine.classList.remove('xplor-ide-loader-line');
-      }
+    const loaderLine = document.getElementById('loader-line') as HTMLInputElement;
+    if (loaderLine) {
+      loaderLine.classList.remove('xplor-ide-loader-line');
+    }
 
     return (
-      <div style={{ padding: 0, paddingLeft: '-16px', backgroundColor: 'transparent', color: '#ffffff', width: '100%' }}>
+      <div style={{ padding: 0, backgroundColor: 'transparent', color: '#ffffff', width: '100%' }}>
         <FormGrid container spacing={2}>
-          {/* Action */}
-          <Grid item xs={12} sx={{ padding: 0 }}>
-            <FormGrid>
-              <FormLabel
-                htmlFor="action"
-                className="title-form"
-                sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
-              >
-                Action
-              </FormLabel>
-              <FormControl fullWidth variant="outlined">
-                <Select
-                  value={this.state.action}
-                  onChange={this.handleSelectChange('action')}
-                  sx={commonSelectStyle}
-                  MenuProps={commonMenuProps}
-                  displayEmpty
+          {/* Action and Count in a Row */}
+          <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
+            <Grid item xs={6} sx={{ padding: 0 }}>
+              <FormGrid>
+                <FormLabel
+                  htmlFor="action"
+                  className="title-form"
+                  sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
                 >
-                  <MenuItem value="">Select Action</MenuItem>
-                  <MenuItem value="0">Do Nothing</MenuItem>
-                  <MenuItem value="1">Breakpoint Exception</MenuItem>
-                </Select>
-              </FormControl>
-            </FormGrid>
-          </Grid>
-
-          {/* Count Dropdown */}
-          <Grid item xs={12} sx={{ padding: 0 }}>
-            <FormGrid>
-              <FormLabel
-                htmlFor="count"
-                className="title-form"
-                sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
-              >
-                Count
-              </FormLabel>
-              <FormControl fullWidth variant="outlined">
-                <Select
-                  id="count"
-                  value={this.state.count}
-                  onChange={this.handleSelectChange('count')}
-                  sx={commonSelectStyle}
-                  MenuProps={commonMenuProps}
-                  displayEmpty
+                  Action
+                </FormLabel>
+                <FormControl fullWidth variant="outlined">
+                  <Select
+                    value={this.state.action}
+                    onChange={this.handleSelectChange('action')}
+                    sx={commonSelectStyle}
+                    MenuProps={commonMenuProps}
+                    displayEmpty
+                  >
+                    <MenuItem value="switch to debug mode">switch to debug mode</MenuItem>
+                    <MenuItem value="switch to debug">switch to debug</MenuItem>
+                  </Select>
+                </FormControl>
+              </FormGrid>
+            </Grid>
+            <Grid item xs={6} sx={{ padding: 0 }}>
+              <FormGrid>
+                <FormLabel
+                  htmlFor="count"
+                  className="title-form"
+                  sx={{ color: '#ffffff', marginBottom: '3px', fontSize: '14px' }}
                 >
-                  <MenuItem value="">Select Count</MenuItem>
-                  {[...Array(10).keys()].map(i => (
-                    <MenuItem key={i + 1} value={(i + 1).toString()}>
-                      {i + 1}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </FormGrid>
+                  Count
+                </FormLabel>
+                <FormControl fullWidth variant="outlined">
+                  <Select
+                    id="count"
+                    value={this.state.count}
+                    onChange={this.handleSelectChange('count')}
+                    sx={commonSelectStyle}
+                    MenuProps={commonMenuProps}
+                    displayEmpty
+                  >
+                    <MenuItem value="1">switch to debug mode</MenuItem>
+                    <MenuItem value="2">switch to mode</MenuItem>
+                    <MenuItem value="3">switch to debug</MenuItem>
+                  </Select>
+                </FormControl>
+              </FormGrid>
+            </Grid>
           </Grid>
 
           {/* Dmode Checkbox */}
@@ -253,7 +249,7 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
           {/* Centered Title for Mode Checkboxes */}
           <Grid container sx={{ mt: 0.5, margin: 0, width: '100%', paddingLeft: '16px' }}>
             <Typography sx={{ color: '#ffffff', fontWeight: '500', fontSize: '14px' }} className="title-form">
-              Select at least one mode:
+              Select at least one mode <span style={{ color: 'red' }}>*</span>:
             </Typography>
           </Grid>
 
@@ -319,29 +315,28 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
   }
 
   public async openWithData(trigger: TriggerConfig, isEdit = false): Promise<TriggerConfig | undefined> {
-
     const defaultState: DialogState = {
-      action: '',
-      count: '',
+      action: 'switch to debug mode',
+      count: '1',
       dmode: false,
       machineMode: false,
       supervisorMode: false,
       userMode: false,
     };
 
-    if (trigger.tdata1.type === 3) {
+    if (trigger.triggerType === 'icount' && trigger.tdata1.type === 3) {
       // tdata1 is ICount
       this.state = {
-        action: (trigger.tdata1.action === '0' || trigger.tdata1.action === '1') ? trigger.tdata1.action : '',
-        dmode: trigger.tdata1.dmode || false,
-        machineMode: trigger.tdata1.m || false,
-        supervisorMode: trigger.tdata1.s || false,
-        userMode: trigger.tdata1.u || false,
-        count: trigger.tdata1.count ? trigger.tdata1.count.toString() : '',
+        action: trigger.tdata1.action || defaultState.action,
+        count: trigger.tdata1.count ? trigger.tdata1.count.toString() : defaultState.count,
+        dmode: trigger.tdata1.dmode || defaultState.dmode,
+        machineMode: trigger.tdata1.m || defaultState.machineMode,
+        supervisorMode: trigger.tdata1.s || defaultState.supervisorMode,
+        userMode: trigger.tdata1.u || defaultState.userMode,
       };
     } else {
-      // tdata1 is not ICount, use default state and show warning
-      this.messageService.warn('Invalid tdata1 type. Expected ICount (type 3). Using default state.');
+      // Invalid trigger type or tdata1 type, use default state and show warning
+      this.messageService.warn('Invalid trigger type or tdata1. Expected icount trigger with type 3. Using default state.');
       this.state = defaultState;
     }
 

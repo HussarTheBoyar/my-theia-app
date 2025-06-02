@@ -1,10 +1,20 @@
 import { Container, inject, injectable, interfaces } from '@theia/core/shared/inversify';
 import { MenuModelRegistry } from '@theia/core';
 import { HoangWidget } from './hoang-widget';
-import { AbstractViewContribution, codicon, createTreeContainer, defaultTreeProps, TreeProps, Widget } from '@theia/core/lib/browser';
+import {
+    AbstractViewContribution,
+    codicon,
+    createTreeContainer,
+    defaultTreeProps,
+    TreeProps,
+    Widget
+} from '@theia/core/lib/browser';
 import { Command, CommandRegistry } from '@theia/core/lib/common/command';
 import { FirstStepDialog } from './step1-dialog';
-import { TabBarToolbarContribution, TabBarToolbarRegistry } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
+import {
+    TabBarToolbarContribution,
+    TabBarToolbarRegistry
+} from '@theia/core/lib/browser/shell/tab-bar-toolbar';
 
 export const HoangCommand: Command = { id: 'hoang:command' };
 
@@ -12,8 +22,17 @@ export namespace TriggerCommand {
     export const IMPORT: Command = {
         id: 'trigger:import',
         label: 'Import Trigger'
-    }
+    };
+    export const DELETE_ALL: Command = {
+        id: 'trigger:delete-all',
+        label: 'Delete All Triggers'
+    };
+    export const DISABLE_ALL: Command = {
+        id: 'trigger:disable-all',
+        label: 'Disable/Enable All Triggers'
+    };
 }
+
 
 @injectable()
 export class HoangContribution extends AbstractViewContribution<HoangWidget> implements TabBarToolbarContribution {
@@ -21,14 +40,9 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
     @inject(FirstStepDialog)
     protected readonly firstDialog: FirstStepDialog;
 
-    /**
-     * `AbstractViewContribution` handles the creation and registering
-     *  of the widget including commands, menus, and keybindings.
-     * 
-     * We can pass `defaultWidgetOptions` which define widget properties such as 
-     * its location `area` (`main`, `left`, `right`, `bottom`), `mode`, and `ref`.
-     * 
-     */
+    // New state to track enable/disable toggle
+    protected allDisabled = false;
+
     constructor() {
         super({
             widgetId: HoangWidget.ID,
@@ -37,26 +51,7 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
             toggleCommandId: HoangCommand.id
         });
     }
-    
 
-    /**
-     * Example command registration to open the widget from the menu, and quick-open.
-     * For a simpler use case, it is possible to simply call:
-     ```ts
-        super.registerCommands(commands)
-     ```
-     *
-     * For more flexibility, we can pass `OpenViewArguments` which define 
-     * options on how to handle opening the widget:
-     * 
-     ```ts
-        toggle?: boolean
-        activate?: boolean;
-        reveal?: boolean;
-     ```
-     *
-     * @param commands
-     */
     registerCommands(commands: CommandRegistry): void {
         commands.registerCommand(HoangCommand, {
             execute: () => super.openView({ activate: false, reveal: true })
@@ -64,37 +59,46 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
 
         commands.registerCommand(TriggerCommand.IMPORT, {
             execute: async () => {
-                // Implement the import logic here
                 const valueTrigger = await this.firstDialog.open();
                 if (valueTrigger) {
-                    const widget = await this.openView({ activate: true }); // get the widget instance
+                    const widget = await this.openView({ activate: true });
                     if (widget instanceof HoangWidget) {
-                        widget.triggers.push(valueTrigger); // push the new trigger
-                        await widget.refreshView();         // refresh the tree view
-                        this.firstDialog.close();           // optionally close dialog
+                        widget.triggers.push(valueTrigger);
+                        await widget.refreshView();
+                        this.firstDialog.close();
                     }
                 }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
             isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
         });
-    }
-    
 
-    /**
-     * Example menu registration to contribute a menu item used to open the widget.
-     * Default location when extending the `AbstractViewContribution` is the `View` main-menu item.
-     * 
-     * We can however define new menu path locations in the following way:
-     ```ts
-        menus.registerMenuAction(CommonMenus.HELP, {
-            commandId: 'id',
-            label: 'label'
+        commands.registerCommand(TriggerCommand.DELETE_ALL, {
+            execute: async () => {
+                const widget = await this.openView({ activate: true });
+                if (widget instanceof HoangWidget) {
+                    widget.triggers = [];
+                    await widget.refreshView();
+                }
+            },
+            isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
+            isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
         });
-     ```
-     * 
-     * @param menus
-     */
+
+        commands.registerCommand(TriggerCommand.DISABLE_ALL, {
+            execute: async () => {
+                const widget = await this.openView({ activate: true });
+                if (widget instanceof HoangWidget) {
+                    this.allDisabled = !this.allDisabled; // Toggle the state
+                    widget.triggers.forEach(trigger => trigger.isEnable = !this.allDisabled);
+                    await widget.refreshView();
+                }
+            },
+            isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
+            isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
+        });
+    }
+
     registerMenus(menus: MenuModelRegistry): void {
         super.registerMenus(menus);
     }
@@ -104,8 +108,22 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
             id: TriggerCommand.IMPORT.id,
             command: TriggerCommand.IMPORT.id,
             icon: codicon('add'),
-            priority: 2,
+            priority: 0, // LEFTMOST
             tooltip: TriggerCommand.IMPORT.label,
+        });
+        toolbar.registerItem({
+            id: TriggerCommand.DISABLE_ALL.id,
+            command: TriggerCommand.DISABLE_ALL.id,
+            icon: codicon('activate-breakpoints'),
+            priority: 1, // MIDDLE
+            tooltip: TriggerCommand.DISABLE_ALL.label,
+        });
+        toolbar.registerItem({
+            id: TriggerCommand.DELETE_ALL.id,
+            command: TriggerCommand.DELETE_ALL.id,
+            icon: codicon('close-all'),
+            priority: 2, // RIGHTMOST
+            tooltip: TriggerCommand.DELETE_ALL.label,
         });
     }
 
@@ -126,7 +144,6 @@ export function createRISCVDebugTriggerTreeContainer(parent: interfaces.Containe
         props: TRIGGER_PROPS,
     });
 
-    // Ensure no duplicate bindings
     if (child.isBound(HoangWidget)) {
         child.unbind(HoangWidget);
     }
@@ -138,6 +155,3 @@ export function createRISCVDebugTriggerTreeContainer(parent: interfaces.Containe
 export function createRISCVTriggerWidget(parent: interfaces.Container): HoangWidget {
     return createRISCVDebugTriggerTreeContainer(parent).get(HoangWidget);
 }
-
-
-

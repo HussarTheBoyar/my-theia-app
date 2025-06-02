@@ -207,9 +207,9 @@ export class HoangWidget extends TreeWidget {
         if (!model.root || !TriggerTree.RootNode.is(model.root)) {
             return <div className='xplor-widget-info'>{nls.localize('', 'Error while generating widget.')}</div>;
         }
-        if (!model.root.children || model.root.children.length === 0) {
-            return <div className='xplor-widget-info'>{nls.localize('', 'There is no trigger in this project')}</div>;
-        }
+        // if (!model.root.children || model.root.children.length === 0) {
+        //     return <div className='xplor-widget-info'>{nls.localize('', 'There is no trigger in this project')}</div>;
+        // }
         const nodes = (model.root as CompositeTreeNode).children.map(child =>
             this.renderNodeRecursive(child, 0)
         );

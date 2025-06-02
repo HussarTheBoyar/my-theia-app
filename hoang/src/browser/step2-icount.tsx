@@ -149,23 +149,13 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
   }
 
   protected override async accept(): Promise<void> {
-    const { machineMode, supervisorMode, userMode, count, action } = this.state;
+    const { machineMode, supervisorMode, userMode } = this.state;
     const errors: string[] = [];
 
     // Validate modes
     const modesError = this.validateModes(machineMode, supervisorMode, userMode);
     if (modesError) {
       errors.push(modesError);
-    }
-
-    // Validate count
-    if (!count) {
-      errors.push('Please select a count value.');
-    }
-
-    // Validate action
-    if (!action || (action !== '0' && action !== '1')) {
-      errors.push('Please select a valid action.');
     }
 
     if (errors.length > 0) {
@@ -329,11 +319,6 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
   }
 
   public async openWithData(trigger: TriggerConfig, isEdit = false): Promise<TriggerConfig | undefined> {
-    // Validate trigger type
-    if (trigger.triggerType !== 'icount') {
-      this.messageService.error('Invalid trigger type. Expected "icount".');
-      return undefined;
-    }
 
     const defaultState: DialogState = {
       action: '',
@@ -344,14 +329,6 @@ export class SecondStepIcount extends ReactDialog<TriggerConfig> {
       userMode: false,
     };
 
-    // Check for missing tdata1
-    if (!trigger.tdata1) {
-      this.messageService.error('Trigger configuration is missing tdata1.');
-      this.state = defaultState;
-      return undefined;
-    }
-
-    // Narrow tdata1 to ICount
     if (trigger.tdata1.type === 3) {
       // tdata1 is ICount
       this.state = {

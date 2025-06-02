@@ -31,6 +31,33 @@ export namespace TriggerCommand {
         id: 'trigger:disable-all',
         label: 'Disable/Enable All Triggers'
     };
+
+    // Reasonable implementation: just return the EDIT_TRIGGER command object
+    export const EDIT_TRIGGER: Command = {
+        id: 'trigger:edit',
+        label: 'Edit Trigger'
+    };
+    export const REMOVE_TRIGGER: Command = {
+        id: 'trigger:remove',
+        label: 'Remove Trigger'
+    };
+    export const REMOVE_ALL_TRIGGERS: Command = {
+        id: 'trigger:remove-all',
+        label: 'Remove All Triggers'
+    };
+    export const ACTIVE_ALL_TRIGGERS: Command = {
+        id: 'trigger:active-all',
+        label: 'Activate All Triggers'
+    };
+    export const INACTIVE_ALL_TRIGGERS: Command = {
+        id: 'trigger:inactive-all',
+        label: 'Deactivate All Triggers'
+    };
+
+    // This function is not used in the code, but if needed, it could return the EDIT_TRIGGER command
+    export function EDIT_TRIGGER_FN(): Command {
+        return EDIT_TRIGGER;
+    }
 }
 
 
@@ -97,10 +124,73 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
             isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
         });
+
+        commands.registerCommand(TriggerCommand.EDIT_TRIGGER, {
+            execute: async (trigger: any) => {
+                console.log('Editing trigger:', trigger);
+            },
+            isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
+            isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
+        });
+
+        commands.registerCommand(TriggerCommand.REMOVE_TRIGGER, {
+            execute: async (trigger: any) => {
+                console.log('Removing trigger:', trigger);
+            },
+            isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
+            isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
+        });
+
+        commands.registerCommand(TriggerCommand.REMOVE_ALL_TRIGGERS, {
+            execute: async () => {
+                console.log('Removing all triggers');
+            },
+            isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
+            isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
+        });
+
+        commands.registerCommand(TriggerCommand.ACTIVE_ALL_TRIGGERS, {
+            execute: async () => {
+                console.log('Activating all triggers');
+            },
+            isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
+            isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
+        });
+
+        commands.registerCommand(TriggerCommand.INACTIVE_ALL_TRIGGERS, {
+            execute: async () => {
+                console.log('Deactivating all triggers');
+            },
+            isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
+            isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
+        });
     }
 
     registerMenus(menus: MenuModelRegistry): void {
         super.registerMenus(menus);
+        
+        menus.registerSubmenu(HoangWidget.CONTEXT_MENU, 'Trigger Options');
+
+        const registerMenuActions = (menuPath: string[], ...commands: Command[]) => {
+            for (const [index, command] of commands.entries()) {
+                const label = command.label;
+                menus.registerMenuAction(menuPath, {
+                    commandId: command.id,
+                    label: label,
+                    icon: command.iconClass,
+                    order: String.fromCharCode('a'.charCodeAt(0) + index)
+                });
+            }
+        };
+
+        // Register your context menu actions
+        registerMenuActions(HoangWidget.CONTEXT_MENU,
+            TriggerCommand.EDIT_TRIGGER,
+            TriggerCommand.REMOVE_TRIGGER,
+            TriggerCommand.REMOVE_ALL_TRIGGERS,
+            TriggerCommand.ACTIVE_ALL_TRIGGERS,
+            TriggerCommand.INACTIVE_ALL_TRIGGERS,
+        );
     }
 
     registerToolbarItems(toolbar: TabBarToolbarRegistry): void {

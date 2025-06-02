@@ -94,7 +94,7 @@ const TRIGGER_MOCK_DATA: TriggerConfig[] = [
             sizehi: "0",
             action: "1",
             match: "0",
-            chain: true ,
+            chain: true,
             m: true,
             s: true,
             u: true,
@@ -104,20 +104,20 @@ const TRIGGER_MOCK_DATA: TriggerConfig[] = [
         }
     },
     {
-      name: "Trigger 4",
-      id: "123e4567-e89b-12d3-a456-426614174000",
-      isEnable: true,
-      triggerType: "icount",
-      tdata1: {
-        type: 3,
-        action: "switch to debug mode",
-        count: 1,
-        dmode: true,
-        m: true,
-        s: true,
-        u: true
-      },
-      tdata2: undefined
+        name: "Trigger 4",
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        isEnable: true,
+        triggerType: "icount",
+        tdata1: {
+            type: 3,
+            action: "switch to debug mode",
+            count: 1,
+            dmode: true,
+            m: true,
+            s: true,
+            u: true
+        },
+        tdata2: undefined
     }
 ];
 
@@ -264,6 +264,27 @@ export class HoangWidget extends TreeWidget {
         return React.createElement('div', attributes, content);
     }
 
+    protected override createNodeAttributes(node: TreeNode, props: NodeProps): React.HTMLAttributes<HTMLElement> {
+        const attributes = super.createNodeAttributes(node, props);
+        
+        // Add right-click (context menu) support
+        attributes.onContextMenu = e => {
+            e.preventDefault(); // prevent default browser menu
+
+            // select the clicked node so commands know the context
+            this.selectionService.selection = node;
+
+            // render your custom context menu
+            this.contextMenuRenderer.render({
+                menuPath: HoangWidget.CONTEXT_MENU,
+                anchor: { x: e.clientX, y: e.clientY },
+                context: e.currentTarget
+            });
+        };
+
+        return attributes;
+    }
+
     protected override renderIcon(node: TreeNode, props: NodeProps): React.ReactNode {
         return (
             <span
@@ -287,87 +308,87 @@ export class HoangWidget extends TreeWidget {
         );
     }
 
-    
+
 
     protected renderInfoButton(node: TreeNode, props: NodeProps): React.ReactNode {
-      const icon = codicon('info');
-      const classNames = [TREE_NODE_SEGMENT_CLASS, 'xplor-trigger-button', icon];
-  
-      const triggerData = (node as TriggerNode).triggerData;
-  
-      const infoItems = [
-          { label: 'ID', value: triggerData.id },
-          { label: 'Name', value: triggerData.name },
-          { label: 'Type', value: triggerData.triggerType },
-          { label: 'Enabled', value: triggerData.isEnable ? 'Yes' : 'No' },
-      ];
-  
-      if (triggerData.triggerType === 'mcontrol') {
-          infoItems.push({ label: 'Match Control Type', value: triggerData.mcontrolType || 'N/A' });
-      }
-  
-      // Define tdata1Items based on whether triggerData.tdata1 is MControl or ICount
-      const tdata1Items = triggerData.triggerType === 'mcontrol' ? [
-          { label: '- Action', value: triggerData.tdata1.action || 'N/A' },
-          { label: '- Match', value: (triggerData.tdata1 as MControl).match || 'N/A' },
-          { label: '- Sizehi', value: (triggerData.tdata1 as MControl).sizehi || 'N/A' },
-          { label: '- Sizelo', value: (triggerData.tdata1 as MControl).sizelo || 'N/A' },
-          { label: '- Maskmax', value: (triggerData.tdata1 as MControl).maskmax || 'N/A' },
-          { label: '- Dmode', value: triggerData.tdata1.dmode ? 'Yes' : 'No' },
-          { label: '- Timing', value: (triggerData.tdata1 as MControl).timing ? 'Yes' : 'No' },
-          { label: '- Select', value: (triggerData.tdata1 as MControl).select ? 'Yes' : 'No' },
-          { label: '- Chain', value: (triggerData.tdata1 as MControl).chain ? 'Yes' : 'No' },
-          { label: '- Machine mode', value: triggerData.tdata1.m ? 'Yes' : 'No' },
-          { label: '- Supervisor mode', value: triggerData.tdata1.s ? 'Yes' : 'No' },
-          { label: '- User mode', value: triggerData.tdata1.u ? 'Yes' : 'No' },
-      ] : [
-          { label: '- Action', value: triggerData.tdata1.action || 'N/A' },
-          { label: '- Count', value: (triggerData.tdata1 as ICount).count ?? 'N/A' },
-          { label: '- Dmode', value: triggerData.tdata1.dmode ? 'Yes' : 'No' },
-          { label: '- Machine mode', value: triggerData.tdata1.m ? 'Yes' : 'No' },
-          { label: '- Supervisor mode', value: triggerData.tdata1.s ? 'Yes' : 'No' },
-          { label: '- User mode', value: triggerData.tdata1.u ? 'Yes' : 'No' },
-      ];
-  
-      return (
-          <Tooltip
-              title={
-                  <div style={{ fontSize: 12, padding: '8px', maxWidth: 400, color: '#ffffff' }}>
-                      {infoItems.map(item => (
-                          <div key={item.label} style={{ marginBottom: 2 }}>
-                              <strong>{item.label}:</strong> {item.value ?? 'N/A'}
-                          </div>
-                      ))}
-                      <div style={{ margin: '4px 0', fontWeight: 'bold' }}>
-                          Trigger Data 1
-                      </div>
-                      {tdata1Items.map(item => (
-                          <div key={item.label} style={{ marginBottom: 2 }}>
-                              <strong>{item.label}:</strong> {item.value}
-                          </div>
-                      ))}
-                      <div style={{ marginTop: 4 }}>
-                          <strong>Trigger Data 2:</strong> {triggerData.tdata2 ?? 'N/A'}
-                      </div>
-                  </div>
-              }
-              placement="top"
-              arrow
-          >
-              <button
-                  type="button"
-                  className={classNames.join(' ')}
-                  tabIndex={0}
-                  aria-label={`Info ${(node as TriggerNode).name}`}
-                  onClick={e => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      console.log('Trigger data:', triggerData);
-                  }}
-              />
-          </Tooltip>
-      );
-  }
+        const icon = codicon('info');
+        const classNames = [TREE_NODE_SEGMENT_CLASS, 'xplor-trigger-button', icon];
+
+        const triggerData = (node as TriggerNode).triggerData;
+
+        const infoItems = [
+            { label: 'ID', value: triggerData.id },
+            { label: 'Name', value: triggerData.name },
+            { label: 'Type', value: triggerData.triggerType },
+            { label: 'Enabled', value: triggerData.isEnable ? 'Yes' : 'No' },
+        ];
+
+        if (triggerData.triggerType === 'mcontrol') {
+            infoItems.push({ label: 'Match Control Type', value: triggerData.mcontrolType || 'N/A' });
+        }
+
+        // Define tdata1Items based on whether triggerData.tdata1 is MControl or ICount
+        const tdata1Items = triggerData.triggerType === 'mcontrol' ? [
+            { label: '- Action', value: triggerData.tdata1.action || 'N/A' },
+            { label: '- Match', value: (triggerData.tdata1 as MControl).match || 'N/A' },
+            { label: '- Sizehi', value: (triggerData.tdata1 as MControl).sizehi || 'N/A' },
+            { label: '- Sizelo', value: (triggerData.tdata1 as MControl).sizelo || 'N/A' },
+            { label: '- Maskmax', value: (triggerData.tdata1 as MControl).maskmax || 'N/A' },
+            { label: '- Dmode', value: triggerData.tdata1.dmode ? 'Yes' : 'No' },
+            { label: '- Timing', value: (triggerData.tdata1 as MControl).timing ? 'Yes' : 'No' },
+            { label: '- Select', value: (triggerData.tdata1 as MControl).select ? 'Yes' : 'No' },
+            { label: '- Chain', value: (triggerData.tdata1 as MControl).chain ? 'Yes' : 'No' },
+            { label: '- Machine mode', value: triggerData.tdata1.m ? 'Yes' : 'No' },
+            { label: '- Supervisor mode', value: triggerData.tdata1.s ? 'Yes' : 'No' },
+            { label: '- User mode', value: triggerData.tdata1.u ? 'Yes' : 'No' },
+        ] : [
+            { label: '- Action', value: triggerData.tdata1.action || 'N/A' },
+            { label: '- Count', value: (triggerData.tdata1 as ICount).count ?? 'N/A' },
+            { label: '- Dmode', value: triggerData.tdata1.dmode ? 'Yes' : 'No' },
+            { label: '- Machine mode', value: triggerData.tdata1.m ? 'Yes' : 'No' },
+            { label: '- Supervisor mode', value: triggerData.tdata1.s ? 'Yes' : 'No' },
+            { label: '- User mode', value: triggerData.tdata1.u ? 'Yes' : 'No' },
+        ];
+
+        return (
+            <Tooltip
+                title={
+                    <div style={{ fontSize: 12, padding: '8px', maxWidth: 400, color: '#ffffff' }}>
+                        {infoItems.map(item => (
+                            <div key={item.label} style={{ marginBottom: 2 }}>
+                                <strong>{item.label}:</strong> {item.value ?? 'N/A'}
+                            </div>
+                        ))}
+                        <div style={{ margin: '4px 0', fontWeight: 'bold' }}>
+                            Trigger Data 1
+                        </div>
+                        {tdata1Items.map(item => (
+                            <div key={item.label} style={{ marginBottom: 2 }}>
+                                <strong>{item.label}:</strong> {item.value}
+                            </div>
+                        ))}
+                        <div style={{ marginTop: 4 }}>
+                            <strong>Trigger Data 2:</strong> {triggerData.tdata2 ?? 'N/A'}
+                        </div>
+                    </div>
+                }
+                placement="top"
+                arrow
+            >
+                <button
+                    type="button"
+                    className={classNames.join(' ')}
+                    tabIndex={0}
+                    aria-label={`Info ${(node as TriggerNode).name}`}
+                    onClick={e => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        console.log('Trigger data:', triggerData);
+                    }}
+                />
+            </Tooltip>
+        );
+    }
 
     protected renderUpdateButton(node: TreeNode, props: NodeProps): React.ReactNode {
         const icon = codicon('edit');
@@ -421,17 +442,17 @@ export class HoangWidget extends TreeWidget {
             this.messageService.warn(`Trigger "${node.name}" not found.`);
             return;
         }
-    
+
         const updatedTrigger = await this.demoDialog.openWithData(node.triggerData);
-    
+
         if (updatedTrigger) {
             this.triggers[index] = {
                 ...this.triggers[index],
                 ...updatedTrigger
             };
-    
+
             await this.refreshView();
-    
+
             this.messageService.info(`Trigger "${updatedTrigger.name}" updated.`);
         }
     }
@@ -442,13 +463,13 @@ export class HoangWidget extends TreeWidget {
 
         const index = this.triggers.findIndex(t => t.id === node.triggerData.id);
 
-            if (index !== -1) {
-                this.triggers.splice(index, 1); 
-                await this.refreshView();       
-                this.messageService.info(`Trigger "${node.name}" deleted (index: ${index})`);
-            } else {
-                this.messageService.warn(`Trigger "${node.name}" not found`);
-            }
+        if (index !== -1) {
+            this.triggers.splice(index, 1);
+            await this.refreshView();
+            this.messageService.info(`Trigger "${node.name}" deleted (index: ${index})`);
+        } else {
+            this.messageService.warn(`Trigger "${node.name}" not found`);
+        }
     }
 
 }

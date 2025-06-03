@@ -4,6 +4,7 @@ import { injectable, postConstruct, inject } from '@theia/core/shared/inversify'
 import { MenuPath, MessageService, nls } from '@theia/core';
 import { codicon, CompositeTreeNode, ContextMenuRenderer, ExpandableTreeNode, LabelProvider, Message, NodeProps, TREE_NODE_CONTENT_CLASS, TREE_NODE_SEGMENT_CLASS, TreeModel, TreeNode, TreeProps, TreeWidget } from '@theia/core/lib/browser';
 import { FirstStepDialog } from './step1-dialog';
+import { SecondStepDialog } from './step2-dialog';
 import { TriggerNode } from './common/ui-interface';
 import { TriggerConfig, MControl, ICount } from './common/trigger-interface';
 import Tooltip from '@mui/material/Tooltip';
@@ -135,6 +136,7 @@ export class HoangWidget extends TreeWidget {
 
     @inject(FirstStepDialog)
     protected readonly firstDialog!: FirstStepDialog;
+    protected readonly secondDialog!: SecondStepDialog;
 
     public triggers = TRIGGER_MOCK_DATA;
 
@@ -434,28 +436,29 @@ export class HoangWidget extends TreeWidget {
     }
 
     private async onUpdateButtonClick(e: React.MouseEvent<HTMLSpanElement, MouseEvent>, node: TriggerNode): Promise<void> {
-        e.stopPropagation();
-        e.preventDefault();
-
-        const index = this.triggers.findIndex(t => t.id === node.triggerData.id);
-        if (index === -1) {
-            this.messageService.warn(`Trigger "${node.name}" not found.`);
-            return;
-        }
-
-        const updatedTrigger = await this.firstDialog.openWithData(node.triggerData);
-
-        if (updatedTrigger) {
-            this.triggers[index] = {
-                ...this.triggers[index],
-                ...updatedTrigger
-            };
-
-            await this.refreshView();
-
-            this.messageService.info(`Trigger "${updatedTrigger.name}" updated.`);
-        }
-    }
+      e.stopPropagation();
+      e.preventDefault();
+  
+      const index = this.triggers.findIndex(t => t.id === node.triggerData.id);
+      if (index === -1) {
+          this.messageService.warn(`Trigger "${node.name}" not found.`);
+          return;
+      }
+  
+      try {
+          const updatedTrigger = await this.firstDialog.openWithData(node.triggerData);
+          if (updatedTrigger) {
+              this.triggers[index] = {
+                  ...this.triggers[index],
+                  ...updatedTrigger
+              };
+              await this.refreshView();
+              this.messageService.info(`Trigger "${updatedTrigger.name}" updated.`);
+          }
+      } catch (error) {
+          this.messageService.error(`Error updating trigger: ${error.message}`);
+      }
+  }
 
     private async onClearButtonClick(e: React.MouseEvent<HTMLSpanElement, MouseEvent>, node: TriggerNode): Promise<void> {
         e.stopPropagation();

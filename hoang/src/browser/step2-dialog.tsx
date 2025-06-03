@@ -141,7 +141,6 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
   };
 
   private readonly handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('TriggerData:', event.target.value);
     this.setDialogState({ triggerData: event.target.value });
   };
 
@@ -595,6 +594,65 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
     Object.assign(this.triggerConfig, this.toTriggerConfig());
     console.log('TriggerConfig:', this.triggerConfig);
   }
+
+  public async openWithData(trigger: TriggerConfig, isEdit = true): Promise<TriggerConfig | undefined> {
+    // Khởi tạo trạng thái mặc định
+    const defaultState: DialogState = {
+        triggerData: trigger.tdata2 || '',
+        sizehi: 'switch to debug mode',
+        sizelo: 'switch to debug mode',
+        match: 'switch to debug mode',
+        action: 'switch to debug mode',
+        maskmax: 'switch to debug mode',
+        dmode: false,
+        timing: false,
+        select: false,
+        chain: false,
+        machineMode: false,
+        supervisorMode: false,
+        userMode: false,
+        matchControlType: trigger.mcontrolType || '',
+    };
+
+    // Nếu triggerType là mcontrol, sử dụng các giá trị từ tdata1 (MControl)
+    if (trigger.triggerType === 'mcontrol' && trigger.tdata1) {
+        const mcontrol = trigger.tdata1 as MControl;
+        console.log('tdata1', trigger.tdata1);
+        this.setDialogState({
+            ...defaultState,
+            sizehi: mcontrol.sizehi || defaultState.sizehi,
+            sizelo: mcontrol.sizelo || defaultState.sizelo,
+            match: mcontrol.match || defaultState.match,
+            action: mcontrol.action || defaultState.action,
+            maskmax: mcontrol.maskmax || defaultState.maskmax,
+            dmode: mcontrol.dmode || defaultState.dmode,
+            timing: mcontrol.timing || defaultState.timing,
+            select: mcontrol.select || defaultState.select,
+            chain: mcontrol.chain || defaultState.chain,
+            machineMode: mcontrol.m || defaultState.machineMode,
+            supervisorMode: mcontrol.s || defaultState.supervisorMode,
+            userMode: mcontrol.u || defaultState.userMode,
+            matchControlType: trigger.mcontrolType || defaultState.matchControlType,
+            triggerData: trigger.tdata2 || defaultState.triggerData,
+        }, true);
+    } else {
+        // Nếu không phải mcontrol (ví dụ: icount), sử dụng giá trị mặc định
+        this.setDialogState(defaultState, true);
+    }
+
+    this.title.label = isEdit ? 'Edit Trigger' : 'Create Trigger';
+    this.clearAcceptButton();
+    this.appendAcceptButton(isEdit ? 'Edit' : 'Create');
+    this.update();
+
+    return super.open();
+}
+
+    private clearAcceptButton(): void {
+      const buttons = this['acceptButton'] ? [this['acceptButton']] : [];
+      buttons.forEach(button => button.remove());
+      this['acceptButton'] = undefined;
+    }
 
   public override close(): void {
     super.close();

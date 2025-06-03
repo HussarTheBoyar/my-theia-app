@@ -254,10 +254,25 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
 
     @postConstruct()
     protected init(): void {
-        this.title.label = 'Create Trigger';
-        this.state = { ...FirstStepDialog.persistedState };
-        this.update();
-    }
+      FirstStepDialog.persistedState = {
+          triggerName: '',
+          triggerType: '',
+      };
+      this.state = { ...FirstStepDialog.persistedState };
+      this.initialTriggerData = undefined;
+      this.finalConfig = undefined;
+      this.title.label = 'Create Trigger';
+      this.update();
+  }
+
+  public async open(): Promise<TriggerConfig | undefined> {
+      this.init();
+      this.clearAcceptButton();
+      this.appendAcceptButton('Create');
+      this.update();
+      console.log('FirstStepDialog state after open:', this.state); // Log để kiểm tra
+      return super.open();
+  }
 
     public async openWithData(trigger: TriggerConfig, isEdit = true): Promise<TriggerConfig | undefined> {
         this.initialTriggerData = { ...trigger }; // Lưu trữ node.triggerData

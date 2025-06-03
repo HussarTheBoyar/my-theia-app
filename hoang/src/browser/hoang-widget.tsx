@@ -134,7 +134,7 @@ export class HoangWidget extends TreeWidget {
     protected readonly messageService!: MessageService;
 
     @inject(FirstStepDialog)
-    protected readonly demoDialog!: FirstStepDialog;
+    protected readonly firstDialog!: FirstStepDialog;
 
     public triggers = TRIGGER_MOCK_DATA;
 
@@ -443,7 +443,7 @@ export class HoangWidget extends TreeWidget {
             return;
         }
 
-        const updatedTrigger = await this.demoDialog.openWithData(node.triggerData);
+        const updatedTrigger = await this.firstDialog.openWithData(node.triggerData);
 
         if (updatedTrigger) {
             this.triggers[index] = {

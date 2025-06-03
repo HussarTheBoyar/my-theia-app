@@ -16,6 +16,7 @@ import {
     TabBarToolbarRegistry
 } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
 import { MessageService } from '@theia/core';
+import { SelectionService } from '@theia/core/lib/common/selection-service';
 
 export const HoangCommand: Command = { id: 'hoang:command' };
 
@@ -66,6 +67,9 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
 
     @inject(MessageService)
     protected readonly messageService: MessageService;
+
+    @inject(SelectionService)
+    protected readonly selectionService: SelectionService;
 
     protected allDisabled = false;
 
@@ -129,55 +133,54 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
 
         commands.registerCommand(TriggerCommand.EDIT_TRIGGER, {
             execute: async () => {
+                const selected = this.selectionService.selection;
                 const widget = await this.openView({ activate: true });
-                if (widget instanceof HoangWidget) {
-                    const selectedNode = widget.model.selectedNodes[0];
-                    if (selectedNode && 'triggerData' in selectedNode) {
-                        const triggerNode = selectedNode as any; // TriggerNode
-                        const index = widget.triggers.findIndex(t => t.id === triggerNode.triggerData.id);
-                        if (index === -1) {
-                            this.messageService.warn(`Trigger "${triggerNode.name}" not found.`);
-                            return;
-                        }
-                        const updatedTrigger = await this.firstDialog.openWithData(triggerNode.triggerData);
-                        if (updatedTrigger) {
-                            widget.triggers[index] = { ...widget.triggers[index], ...updatedTrigger };
-                            await widget.refreshView();
-                            this.messageService.info(`Trigger "${updatedTrigger.name}" updated.`);
-                        }
-                    } else {
-                        this.messageService.warn('No trigger selected for editing.');
+                console.log('selected', selected);
+        
+                if (widget instanceof HoangWidget && selected && 'triggerData' in selected) {
+                    const triggerNode = selected as any;
+                    const index = widget.triggers.findIndex(t => t.id === triggerNode.triggerData.id);
+                    if (index === -1) {
+                        this.messageService.warn(`Trigger "${triggerNode.name}" not found.`);
+                        return;
                     }
+        
+                    const updatedTrigger = await this.firstDialog.openWithData(triggerNode.triggerData);
+                    if (updatedTrigger) {
+                        widget.triggers[index] = { ...widget.triggers[index], ...updatedTrigger };
+                        await widget.refreshView();
+                        this.messageService.info(`Trigger "${updatedTrigger.name}" updated.`);
+                    }
+                } else {
+                    this.messageService.warn('No trigger selected for editing.');
                 }
-            },
-            isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
-            isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
+            }
         });
 
         commands.registerCommand(TriggerCommand.REMOVE_TRIGGER, {
             execute: async () => {
+                const selected = this.selectionService.selection;
                 const widget = await this.openView({ activate: true });
-                if (widget instanceof HoangWidget) {
-                    const selectedNode = widget.model.selectedNodes[0];
-                    if (selectedNode && 'triggerData' in selectedNode) {
-                        const triggerNode = selectedNode as any; // TriggerNode
-                        const index = widget.triggers.findIndex(t => t.id === triggerNode.triggerData.id);
-                        if (index !== -1) {
-                            const triggerName = widget.triggers[index].name;
-                            widget.triggers.splice(index, 1);
-                            await widget.refreshView();
-                            this.messageService.info(`Trigger "${triggerName}" removed.`);
-                        } else {
-                            this.messageService.warn(`Trigger "${triggerNode.name}" not found.`);
-                        }
+        
+                if (widget instanceof HoangWidget && selected && 'triggerData' in selected) {
+                    const triggerNode = selected as any; // Bạn có thể tạo type cụ thể hơn
+                    const index = widget.triggers.findIndex(t => t.id === triggerNode.triggerData.id);
+                    if (index !== -1) {
+                        const triggerName = widget.triggers[index].name;
+                        widget.triggers.splice(index, 1);
+                        await widget.refreshView();
+                        this.messageService.info(`Trigger "${triggerName}" removed.`);
                     } else {
-                        this.messageService.warn('No trigger selected for removal.');
+                        this.messageService.warn(`Trigger "${triggerNode.name}" not found.`);
                     }
+                } else {
+                    this.messageService.warn('No trigger selected for removal.');
                 }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,
             isVisible: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger
         });
+        
 
         commands.registerCommand(TriggerCommand.REMOVE_ALL_TRIGGERS, {
             execute: async () => {

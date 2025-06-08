@@ -182,6 +182,7 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
 
     private finalConfig?: TriggerConfig;
     private initialTriggerData?: TriggerConfig; // Lưu trữ node.triggerData
+    private existingTriggerNames: string[] = [];
 
     private static persistedState: DialogState = {
         triggerName: '',
@@ -196,7 +197,7 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
         super(props);
         this.state = { ...FirstStepDialog.persistedState };
         this.appendCloseButton('Cancel');
-        this.appendAcceptButton('Create');
+        this.appendAcceptButton('Next');
 
         this.handleChange = this.handleChange.bind(this);
         this.handleTriggerNameChange = this.handleTriggerNameChange.bind(this);
@@ -270,56 +271,63 @@ export class FirstStepDialog extends ReactDialog<TriggerConfig> {
       this.clearAcceptButton();
       this.appendAcceptButton('Create');
       this.update();
-      console.log('FirstStepDialog state after open:', this.state); // Log để kiểm tra
+      console.log('FirstStepDialog state after open:', this.state);
       return super.open();
   }
 
-    public async openWithData(trigger: TriggerConfig, isEdit = true): Promise<TriggerConfig | undefined> {
-        this.initialTriggerData = { ...trigger }; // Lưu trữ node.triggerData
-        this.setDialogState({
-            triggerName: trigger.name,
-            triggerType: trigger.triggerType
-        });
-        this.title.label = isEdit ? 'Edit Trigger' : 'Create Trigger';
-        this.clearAcceptButton();
-        this.appendAcceptButton(isEdit ? 'Edit' : 'Create');
-        this.update();
+  public async openWithData(trigger: TriggerConfig | undefined, isEdit = true, existingTriggerNames: string[] = []): Promise<TriggerConfig | undefined> {
+    console.log('Opening FirstStepDialog with data:', isEdit);
+    this.existingTriggerNames = existingTriggerNames; // Store the trigger names
+    this.initialTriggerData = trigger ? { ...trigger } : undefined;
+    this.setDialogState({
+        triggerName: trigger?.name ?? '',
+        triggerType: trigger?.triggerType ?? ''
+    });
+    this.title.label = isEdit && trigger ? 'Edit Trigger' : 'Create Trigger';
+    this.clearAcceptButton();
+    this.appendAcceptButton('Next');
+    this.update();
+    return super.open();
+}
 
-        return super.open();
+protected override async accept(): Promise<void> {
+  if (!this.state.triggerName) {
+    this.messageService.error('Please enter a trigger name.');
+    return;
+}
+if (!this.initialTriggerData || this.initialTriggerData.name !== this.state.triggerName) {
+    if (this.existingTriggerNames.includes(this.state.triggerName)) {
+        this.messageService.error('Trigger name already exists. Please choose a different name.');
+        return;
     }
+}
 
-    protected override async accept(): Promise<void> {
-        if (!this.state.triggerName) {
-            this.messageService.error('Please enter a trigger name.');
-            return;
-        }
+  if (!this.state.triggerType) {
+      this.messageService.error('Please select a trigger type.');
+      return;
+  }
 
-        if (!this.state.triggerType) {
-            this.messageService.error('Please select a trigger type.');
-            return;
-        }
+  let config: TriggerConfig | undefined;
 
-        let config: TriggerConfig | undefined;
+  if (this.state.triggerType === 'mcontrol') {
+      config = await this.secondStepDialog.openWithData(this.value, this.title.label === 'Edit Trigger');
+  } else if (this.state.triggerType === 'icount') {
+      config = await this.secondStepIcount.openWithData(this.value, this.title.label === 'Edit Trigger');
+  } else {
+      this.messageService.error(`Trigger type "${this.state.triggerType}" is not supported yet.`);
+      return;
+  }
 
-        if (this.state.triggerType === 'mcontrol') {
-            config = await this.secondStepDialog.openWithData(this.value, this.title.label === 'Edit Trigger');
-        } else if (this.state.triggerType === 'icount') {
-            config = await this.secondStepIcount.openWithData(this.value, this.title.label === 'Edit Trigger');
-        } else {
-            this.messageService.error(`Trigger type "${this.state.triggerType}" is not supported yet.`);
-            return;
-        }
-
-        if (config) {
-            this.finalConfig = {
-                ...config,
-                name: this.state.triggerName,
-                triggerType: this.state.triggerType as 'mcontrol' | 'icount' | 'itrigger' | 'etrigger',
-            };
-            console.log('Final Trigger Config:', this.finalConfig);
-            super.accept();
-        }
-    }
+  if (config) {
+      this.finalConfig = {
+          ...config,
+          name: this.state.triggerName,
+          triggerType: this.state.triggerType as 'mcontrol' | 'icount' | 'itrigger' | 'etrigger',
+      };
+      console.log('Final Trigger Config:', this.finalConfig);
+      super.accept();
+  }
+}
 
     public override close(): void {
         super.close();

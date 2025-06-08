@@ -89,15 +89,20 @@ export class HoangContribution extends AbstractViewContribution<HoangWidget> imp
 
         commands.registerCommand(TriggerCommand.IMPORT, {
             execute: async () => {
-                const valueTrigger = await this.firstDialog.open();
-                if (valueTrigger) {
-                    const widget = await this.openView({ activate: true });
-                    if (widget instanceof HoangWidget) {
+                const widget = await this.openView({ activate: true });
+                if (widget instanceof HoangWidget) {
+                    // Get existing trigger names
+                    const existingTriggerNames = widget.triggers.map(t => t.name);
+                    // Open FirstStepDialog with no initial trigger (new trigger) and existing trigger names
+                    const valueTrigger = await this.firstDialog.openWithData(undefined, false, existingTriggerNames);
+                    if (valueTrigger) {
                         widget.triggers.push(valueTrigger);
                         await widget.refreshView();
                         this.firstDialog.close();
                         this.messageService.info(`Trigger "${valueTrigger.name}" imported.`);
                     }
+                } else {
+                    this.messageService.warn('HoangWidget not found.');
                 }
             },
             isEnabled: widget => widget instanceof Widget ? widget instanceof HoangWidget : !!this.trigger,

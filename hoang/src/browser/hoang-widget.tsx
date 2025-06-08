@@ -256,8 +256,8 @@ export class HoangWidget extends TreeWidget {
             {this.renderCaption(node, props)}
             {this.renderCaptionAffixes(node, props, 'captionSuffixes')}
             {this.renderTailDecorations(node, props)}
-            {this.renderUpdateButton(node, props)}
             {this.renderInfoButton(node, props)}
+            {this.renderUpdateButton(node, props)}
             {this.renderDeleteButton(node, props)}
         </div>;
 
@@ -434,25 +434,26 @@ export class HoangWidget extends TreeWidget {
     }
 
     private async onUpdateButtonClick(e: React.MouseEvent<HTMLSpanElement, MouseEvent>, node: TriggerNode): Promise<void> {
-      e.stopPropagation();
-      e.preventDefault();
-  
-      const index = this.triggers.findIndex(t => t.id === node.triggerData.id);
-      if (index === -1) {
-          this.messageService.warn(`Trigger "${node.name}" not found.`);
-          return;
-      }
-  
-          const updatedTrigger = await this.demoDialog.openWithData(node.triggerData);
-          if (updatedTrigger) {
-              this.triggers[index] = {
-                  ...this.triggers[index],
-                  ...updatedTrigger
-              };
-              await this.refreshView();
-              this.messageService.info(`Trigger "${updatedTrigger.name}" updated.`);
-          }
-  }
+        e.stopPropagation();
+        e.preventDefault();
+    
+        const index = this.triggers.findIndex(t => t.id === node.triggerData.id);
+        if (index === -1) {
+            this.messageService.warn(`Trigger "${node.name}" not found.`);
+            return;
+        }
+    
+        const existingTriggerNames = this.triggers.map(t => t.name);
+        const updatedTrigger = await this.demoDialog.openWithData(node.triggerData, true, existingTriggerNames);
+        if (updatedTrigger) {
+            this.triggers[index] = {
+                ...this.triggers[index],
+                ...updatedTrigger
+            };
+            await this.refreshView();
+            this.messageService.info(`Trigger "${updatedTrigger.name}" updated.`);
+        }
+    }
 
     private async onClearButtonClick(e: React.MouseEvent<HTMLSpanElement, MouseEvent>, node: TriggerNode): Promise<void> {
         e.stopPropagation();

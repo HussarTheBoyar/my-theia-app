@@ -3,7 +3,7 @@ import { DialogProps, Message } from '@theia/core/lib/browser';
 import { ReactDialog } from '@theia/core/lib/browser/dialogs/react-dialog';
 import { inject, injectable, postConstruct } from '@theia/core/shared/inversify';
 import * as React from 'react';
-
+import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
 import { styled } from '@mui/material/styles';
 import MenuItem from '@mui/material/MenuItem';
@@ -428,7 +428,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                   <Checkbox
                     checked={this.state.dmode}
                     onChange={this.handleCheckboxChange('dmode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#1976d2' } }}
                   />
                 }
                 label={<Typography sx={{ color: '#ffffff' }}>Dmode</Typography>}
@@ -440,7 +440,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                   <Checkbox
                     checked={this.state.timing}
                     onChange={this.handleCheckboxChange('timing')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#1976d2' } }}
                   />
                 }
                 label={<Typography sx={{ color: '#ffffff' }}>Timing</Typography>}
@@ -452,7 +452,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                   <Checkbox
                     checked={this.state.select}
                     onChange={this.handleCheckboxChange('select')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#1976d2' } }}
                   />
                 }
                 label={<Typography sx={{ color: '#ffffff' }}>Select</Typography>}
@@ -464,11 +464,17 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                   <Checkbox
                     checked={this.state.chain}
                     onChange={this.handleCheckboxChange('chain')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#1976d2' } }}
                   />
                 }
                 label={<Typography sx={{ color: '#ffffff' }}>Chain</Typography>}
               />
+            </Grid>
+          </Grid>
+
+          <Grid container sx={{ mt: 1, marginTop: '15px', marginBottom: '10px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <Grid item xs={8}>
+              <Divider sx={{ backgroundColor: '#ffffff', opacity: 0.5 }} />
             </Grid>
           </Grid>
 
@@ -480,14 +486,14 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
           </Grid>
 
           {/* Checkboxes - Row 2 (3 items) */}
-          <Grid container spacing={2} sx={{ margin: 0, width: '100%' }}>
+          <Grid container spacing={2} sx={{ margin: 0, marginTop: '-15px', width: '100%' }}>
             <Grid item xs={4} sx={{ padding: 0 }}>
               <FormControlLabel
                 control={
                   <Checkbox
                     checked={this.state.machineMode}
                     onChange={this.handleCheckboxChange('machineMode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#1976d2' } }}
                   />
                 }
                 label={<Typography sx={{ color: '#ffffff' }}>Machine mode</Typography>}
@@ -499,7 +505,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                   <Checkbox
                     checked={this.state.supervisorMode}
                     onChange={this.handleCheckboxChange('supervisorMode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#1976d2' } }}
                   />
                 }
                 label={<Typography sx={{ color: '#ffffff' }}>Supervisor mode</Typography>}
@@ -511,7 +517,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
                   <Checkbox
                     checked={this.state.userMode}
                     onChange={this.handleCheckboxChange('userMode')}
-                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#f44336' } }}
+                    sx={{ color: '#ffffff', '&.Mui-checked': { color: '#1976d2' } }}
                   />
                 }
                 label={<Typography sx={{ color: '#ffffff' }}>User mode</Typography>}
@@ -642,7 +648,7 @@ export class SecondStepDialog extends ReactDialog<TriggerConfig> {
 
     this.title.label = isEdit ? 'Edit Trigger' : 'Create Trigger';
     this.clearAcceptButton();
-    this.appendAcceptButton(isEdit ? 'Edit' : 'Create');
+    this.appendAcceptButton(isEdit ? 'Edit Trigger' : 'Create Triggers');
     this.update();
 
     return super.open();
